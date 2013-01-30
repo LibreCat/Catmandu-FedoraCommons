@@ -1,0 +1,8 @@
+Catmandu-FedoraCommons
+
+Work in progress.
+
+Perl API to the Fedora Commons REST API. We envision access and modify interfaces
+plus Catmandu::Importer/Catmandu::Store functionality.
+
+
