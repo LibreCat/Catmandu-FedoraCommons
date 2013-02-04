@@ -68,8 +68,9 @@ sub new {
 }
 
 sub _GET {
-    my ($self,$path,$data,$callback) = @_;
-    
+    my ($self,$path,$data,$callback,$headers) = @_;
+    $headers = {} unless $headers;
+        
     my @parts;
     for my $part (@$data) {
         my ($key) = keys %$part;
@@ -78,7 +79,7 @@ sub _GET {
     
     my $query = join("&",@parts);
    
-    my $req = GET $self->{baseurl} . $path . '?' . $query;
+    my $req = GET $self->{baseurl} . $path . '?' . $query ,  %$headers;
     
     $req->authorization_basic($self->{username}, $self->{password});
     
@@ -89,7 +90,7 @@ sub _GET {
 
 sub _POST {
     my ($self,$path,$data,$callback) = @_;
-    
+        
     my $content = undef;
     my @parts;
     
@@ -112,7 +113,8 @@ sub _POST {
         $req = POST $self->{baseurl} . $path . '?' . $query, Content_Type => 'form-data' , Content => $content;
     }
     else {
-        $req = POST $self->{baseurl} . $path . '?' . $query;
+        # Need a Content_Type text/xml because of a Fedora 'ingest' feature that requires it...
+        $req = POST $self->{baseurl} . $path . '?' . $query, Content_Type => 'text/xml';
     }
     
     $req->authorization_basic($self->{username}, $self->{password});
@@ -124,7 +126,7 @@ sub _POST {
 
 sub _PUT {
     my ($self,$path,$data,$callback) = @_;
-    
+
     my $content = undef;
     my @parts;
     
@@ -147,11 +149,12 @@ sub _PUT {
         $req = PUT $self->{baseurl} . $path . '?' . $query, Content_Type => 'form-data' , Content => $content;
     }
     else {
-        $req = PUT $self->{baseurl} . $path . '?' . $query;
+        # Need a Content_Type text/xml because of a Fedora 'ingest' feature that requires it...
+        $req = PUT $self->{baseurl} . $path . '?' . $query, Content_Type => 'text/xml';
     }
-    
-    $req->authorization_basic($self->{username}, $self->{password});
 
+    $req->authorization_basic($self->{username}, $self->{password});
+    
     defined $callback ?
         return $self->{ua}->request($req, $callback, 4096) :
         return $self->{ua}->request($req);
@@ -688,6 +691,120 @@ sub getObjectXML {
             'getObjectXML' , $self->_GET('/objects/' . $pid . '/objectXML', $form_data)
            );  
 }
+
+=head2 getRelationships(pid => $pid [, relation => [$subject, $predicate, undef] , format => $format ])
+
+=cut
+sub getRelationships {
+    my $self = shift;
+    my %args = (pid => undef , relation => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    
+    my $pid       = $args{pid};
+    my $format    = $args{format};
+    
+    my ($subject,$predicate);
+    
+    if (defined $args{relation} && ref $args{relation} eq 'ARRAY') {
+        $subject   = $args{relation}->[0];
+        $predicate = $args{relation}->[1];
+    }
+    
+    my %defaults = (subject => $subject, predicate => $predicate);
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} } if defined $values{$name};
+    }
+    return Catmandu::FedoraCommons::Response->factory(
+               'getRelationships' , $self->_GET('/objects/' . $pid . '/relationships', $form_data)
+           );
+}
+
+=head2 ingest(pid => $pid , file => $filename , format => $format , %args)
+
+=head2 ingest(pid => 'new' , file => $filename , format => $format , %args)
+
+=cut
+sub ingest {
+    my $self = shift;
+    my %args = (pid => undef , file => undef , @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    
+    my $pid     = $args{pid};
+    my $file    = $args{file};
+     
+    delete $args{pid};
+    delete $args{file};
+
+    my %defaults = (ignoreMime => 'true');
+    
+    if (defined $file) {
+        $defaults{format}   = 'info:fedora/fedora-system:FOXML-1.1';
+        $defaults{encoding} = 'UTF-8';
+        $defaults{file}     = ["$file"];
+    }
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'ingest' , $self->_POST('/objects/' . $pid, $form_data)
+           );
+}
+
+=head2 modifyDatastream(pid => $pid , dsID => $dsID, url => $remote_location, %args)
+
+=head2 modifyDatastream(pid => $pid , dsID => $dsID, file => $filename , %args)
+
+ [TODO: uploading of files doesn't work]
+=cut
+sub modifyDatastream {
+    my $self = shift;
+    my %args = (pid => undef , dsID => undef, url => undef , file => undef , @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need dsID" unless $args{dsID};
+    Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file};
+    
+    my $pid  = $args{pid};
+    my $dsID = $args{dsID};
+    my $url  = $args{url};
+    my $file = $args{file};
+     
+    delete $args{pid};
+    delete $args{dsID};
+    delete $args{url};
+    delete $args{file};
+    
+    my %defaults = ( dsLocation => $url , controlGroup => 'E' , versionable => 'false');
+    
+    if (defined $file) {
+        $defaults{file} = ["$file"];
+        $defaults{controlGroup} = 'M';
+    }
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'modifyDatastream' , $self->_PUT('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
+           );
+}
+
+=head2 modifyDatastream(pid => $pid , dsID => $dsID)
 
 =head2 purgeDatastream(pid => $pid , dsID => $dsID , %args)
 

@@ -140,6 +140,9 @@ sub parse_content {
     elsif ($method eq 'getNextPID') {
         return Catmandu::FedoraCommons::Model::pidList->parse($xml);
     }
+    elsif ($method eq 'modifyDatastream') {
+        return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
+    }
     else {
         Carp::croak "no model found for $method";
     }
