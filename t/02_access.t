@@ -1,4 +1,4 @@
-use Test::More tests=>32;
+use Test::More tests=>31;
 use Data::Dumper;
 
 use Catmandu::FedoraCommons;
@@ -57,6 +57,6 @@ ok($obj = $res->parse_content, 'parse_content');
 ok(@{ $obj->{method} } == 11, 'count methods');
 
 sub process {
-    my ( $status, $msg, $headers, $buf ) = @_;
-    ok($buf, 'callback');
+    my ( $data, $response, $protocol ) = @_;
+    ok($data, 'callback');
 }

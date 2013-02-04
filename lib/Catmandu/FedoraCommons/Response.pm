@@ -36,11 +36,13 @@ use Catmandu::FedoraCommons::Model::getObjectProfile;
 use Catmandu::FedoraCommons::Model::listDatastreams;
 use Catmandu::FedoraCommons::Model::listMethods;
 use Catmandu::FedoraCommons::Model::findObjects;
+use Catmandu::FedoraCommons::Model::datastreamProfile;
+use Catmandu::FedoraCommons::Model::pidList;
+use JSON;
 
 sub factory {
     my ($class, $method , $response) = @_;    
-    $response->{method} = $method;
-    bless $response , $class;
+    bless { method => $method , response => $response } , $class;
 }
 
 =head2 is_ok()
@@ -51,7 +53,7 @@ Returns true when the result Fedora Commons response contains no errors.
 sub is_ok {
     my ($self) = @_;
     
-    $self->{code} eq '200';
+    $self->{response}->code eq '200';
 }
 
 =head2 error()
@@ -62,7 +64,7 @@ Returns the error message of the Fedora Commons response if available.
 sub error {
     my ($self) = @_;
     
-    $self->{message};
+    $self->{response}->message;
 }
 
 =head2 parse_content($model)
@@ -98,9 +100,9 @@ Example:
 sub parse_content {
     my ($self,$model) = @_;
     my $method = $self->{method};
-    my $xml    = $self->{content};
-    
-    unless ($self->content_type =~ /(text|application)\/xml/)  {
+    my $xml    = $self->raw;
+
+    unless ($self->content_type =~ /(text|application)\/(xml|json)/)  {
         Carp::carp "You probably want to use the raw() method";
         return undef;
     }
@@ -126,6 +128,18 @@ sub parse_content {
     elsif ($method eq 'resumeFindObjects') {
         return Catmandu::FedoraCommons::Model::findObjects->parse($xml);
     }
+    elsif ($method eq 'addDatastream') {
+        return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
+    }
+    elsif ($method eq 'purgeDatastream') {
+        return decode_json($xml);
+    }
+    elsif ($method eq 'getDatastream') {
+        return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
+    }
+    elsif ($method eq 'getNextPID') {
+        return Catmandu::FedoraCommons::Model::pidList->parse($xml);
+    }
     else {
         Carp::croak "no model found for $method";
     }
@@ -139,7 +153,7 @@ Returns the raw Fedora Commons response as a string.
 sub raw {
     my ($self) = @_;
     
-    $self->{content};
+    $self->{response}->content;
 }
 
 =head2 content_type()
@@ -150,7 +164,7 @@ Returns the Content-Type of the Fedora Commons response.
 sub content_type {
     my ($self) = @_;
     
-    $self->{headers}->{'content-type'}->[0];
+    $self->{response}->header('Content-Type');
 }
 
 =head2 length()
@@ -161,7 +175,7 @@ Returns the byte length of the Fedora Commons response.
 sub length {
     my ($self) = @_;
     
-    $self->{headers}->{'content-length'}->[0];
+    $self->{response}->header('Content-Length');
 }
 
 =head2 date()
@@ -172,7 +186,7 @@ Returns the date of the Fedora Commons response.
 sub date {
     my ($self) = @_;
     
-    $self->{headers}->{'date'}->[0];
+    $self->{response}->header('Date');
 }
 
 =head1 AUTHORS

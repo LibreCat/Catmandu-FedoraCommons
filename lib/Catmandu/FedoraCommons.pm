@@ -32,9 +32,13 @@ use Catmandu::FedoraCommons::Response;
 
 our $VERSION = '0.1';
 use URI::Escape;
-use Furl;
+use HTTP::Request::Common qw(GET POST DELETE PUT HEAD);
+use LWP::UserAgent;
+use MIME::Base64;
 use strict;
 use Carp;
+use Data::Validate::URI qw(is_uri);
+use Data::Dumper;
 
 =head2 new($base_url,$username,$password)
 
@@ -46,9 +50,9 @@ sub new {
     
     Carp::croak "baseurl missing" unless defined $baseurl;
     
-    my $furl = Furl->new(
+    my $ua = LWP::UserAgent->new(
                    agent   => 'Catmandu-FedoraCommons/' . $VERSION,
-                   timeout => 10,
+                   timeout => 180,
                );
     
     $baseurl =~ m/(\w+):\/\/([^\/:]+)(:(\d+))?(\S+)/;
@@ -60,11 +64,12 @@ sub new {
             path     => $5,
             username => $username,
             password => $password,
-            furl     => $furl} , $class;
+            ua       => $ua} , $class;
 }
 
 sub _GET {
     my ($self,$path,$data,$callback) = @_;
+    
     my @parts;
     for my $part (@$data) {
         my ($key) = keys %$part;
@@ -72,28 +77,103 @@ sub _GET {
     }
     
     my $query = join("&",@parts);
+   
+    my $req = GET $self->{baseurl} . $path . '?' . $query;
     
-    return $self->{furl}->request(
-            scheme     => $self->{scheme},
-            host       => $self->{host},
-            port       => $self->{port},
-            path_query => $self->{path} . $path . '?' . $query,
-            method     => 'GET',
-            write_code => $callback,
-    );
+    $req->authorization_basic($self->{username}, $self->{password});
+    
+    defined $callback ?
+        return $self->{ua}->request($req, $callback, 4096) :
+        return $self->{ua}->request($req);
 }
 
 sub _POST {
     my ($self,$path,$data,$callback) = @_;
-    return $self->{furl}->request(
-            scheme     => $self->{scheme},
-            host       => $self->{host},
-            port       => $self->{port},
-            path_query => $self->{path} . $path,
-            method     => 'POST',
-            content    => $data ,
-            write_code => $callback,
-    );
+    
+    my $content = undef;
+    my @parts;
+    
+    for my $part (@$data) {
+        my ($key) = keys %$part;
+        
+        if (ref $part->{$key} eq 'ARRAY') {
+            $content = [ $key => $part->{$key} ];
+        }
+        else {
+            push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
+        }
+    }
+    
+    my $query = join("&",@parts);
+   
+    my $req;
+    
+    if (defined $content) {
+        $req = POST $self->{baseurl} . $path . '?' . $query, Content_Type => 'form-data' , Content => $content;
+    }
+    else {
+        $req = POST $self->{baseurl} . $path . '?' . $query;
+    }
+    
+    $req->authorization_basic($self->{username}, $self->{password});
+
+    defined $callback ?
+        return $self->{ua}->request($req, $callback, 4096) :
+        return $self->{ua}->request($req);
+}
+
+sub _PUT {
+    my ($self,$path,$data,$callback) = @_;
+    
+    my $content = undef;
+    my @parts;
+    
+    for my $part (@$data) {
+        my ($key) = keys %$part;
+        
+        if (ref $part->{$key} eq 'ARRAY') {
+            $content = [ $key => $part->{$key} ];
+        }
+        else {
+            push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
+        }
+    }
+    
+    my $query = join("&",@parts);
+   
+    my $req;
+    
+    if (defined $content) {
+        $req = PUT $self->{baseurl} . $path . '?' . $query, Content_Type => 'form-data' , Content => $content;
+    }
+    else {
+        $req = PUT $self->{baseurl} . $path . '?' . $query;
+    }
+    
+    $req->authorization_basic($self->{username}, $self->{password});
+
+    defined $callback ?
+        return $self->{ua}->request($req, $callback, 4096) :
+        return $self->{ua}->request($req);
+}
+
+sub _DELETE {
+    my ($self,$path,$data,$callback) = @_;
+    
+    my @parts;
+    for my $part (@$data) {
+        my ($key) = keys %$part;
+        push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
+    }
+    
+    my $query = join("&",@parts);
+   
+    my $req = DELETE $self->{baseurl} . $path . '?' . $query;
+    $req->authorization_basic($self->{username}, $self->{password});
+
+    defined $callback ?
+        return $self->{ua}->request($req, $callback, 4096) :
+        return $self->{ua}->request($req);
 }
 
 =head2 findObjects(query => $query, maxResults => $maxResults)
@@ -209,8 +289,8 @@ Example:
     $fedora->getDatastreamDissemination(pid => 'demo:5', dsID => 'VERYHIGHRES', callback => \&process);
     
     sub process {
-        my ( $status, $msg, $headers, $buf ) = @_;
-        print $buf;
+        my ($data, $response, $protocol) = @_;
+        print $data;
     }
     
 =cut
@@ -400,6 +480,244 @@ sub listMethods {
            );
 }
 
+=head1 MODIFY METHODS
+
+=head2 addDatastream(pid => $pid , dsID => $dsID, url => $remote_location, %args)
+
+=head2 addDatastream(pid => $pid , dsID => $dsID, file => $filename , %args)
+
+=cut
+sub addDatastream {
+    my $self = shift;
+    my %args = (pid => undef , dsID => undef, url => undef , file => undef , @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need dsID" unless $args{dsID};
+    Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file};
+    
+    my $pid  = $args{pid};
+    my $dsID = $args{dsID};
+    my $url  = $args{url};
+    my $file = $args{file};
+     
+    delete $args{pid};
+    delete $args{dsID};
+    delete $args{url};
+    delete $args{file};
+    
+    my %defaults = ( dsLocation => $url , controlGroup => 'E' , versionable => 'false');
+    
+    if (defined $file) {
+        $defaults{file} = ["$file"];
+        $defaults{controlGroup} = 'M';
+    }
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'addDatastream' , $self->_POST('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
+           );
+}
+
+=head2 addRelationship(pid => $pid, relation => [ $subject, $predicate, $object] [, dataType => $dataType])
+
+=cut
+sub addRelationship {
+    my $self = shift;
+    my %args = (pid => undef , relation => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need relation" unless defined $args{relation} && ref $args{relation} eq 'ARRAY';
+    
+    my $pid       = $args{pid};
+    my $subject   = $args{relation}->[0];
+    my $predicate = $args{relation}->[1];
+    my $object    = $args{relation}->[2];
+    my $dataType  = $args{dataType};
+    my $isLiteral = is_uri($object) ? "false" : "true";
+    
+    my $form_data = [
+        { subject   => $subject },
+        { predicate => $predicate },
+        { object    => $object },
+        { dataType  => $dataType },
+        { isLiteral => $isLiteral },
+    ];
+
+    return Catmandu::FedoraCommons::Response->factory(
+               'addRelationship' , $self->_POST('/objects/' . $pid . '/relationships/new', $form_data)
+           );
+}
+
+=head2 export(pid => $pid [, format => $format , context => $context , encoding => $encoding])
+
+=cut
+sub export {
+    my $self = shift;
+    my %args = (pid => undef , format => undef , context => undef , encoding => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    
+    my $pid     = $args{pid};
+     
+    delete $args{pid};
+    
+    my %defaults = ();
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'export' , $self->_GET('/objects/' . $pid . '/export', $form_data)
+           );  
+}
+
+=head2 getDatastream(pid => $pid, dsID => $dsID , %args)
+
+=cut
+sub getDatastream {
+    my $self = shift;
+    my %args = (pid => undef , dsID => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need dsID" unless $args{dsID};
+    
+    my $pid  = $args{pid};
+    my $dsID = $args{dsID};
+     
+    delete $args{pid};
+    delete $args{dsID};
+    
+    my %defaults = ( format => 'xml');
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'getDatastream' , $self->_GET('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
+           );  
+}
+
+=head2 getDatastreamHistory(pid => $pid , dsID => $dsID , %args)
+
+=cut
+sub getDatastreamHistory {
+    my $self = shift;
+    my %args = (pid => undef , dsID => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need dsID" unless $args{dsID};
+    
+    my $pid  = $args{pid};
+    my $dsID = $args{dsID};
+     
+    delete $args{pid};
+    delete $args{dsID};
+    
+    my %defaults = ( format => 'xml');
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'getDatastreamHistory' , $self->_GET('/objects/' . $pid . '/datastreams/' . $dsID . '/versions', $form_data)
+           );  
+}
+
+=head2 getNextPID(namespace => $namespace)
+
+=cut
+sub getNextPID {
+    my $self = shift;
+    my %args = (namespace => undef, @_);
+    
+    my %defaults = ( format => 'xml');
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'getNextPID' , $self->_POST('/objects/nextPID', $form_data)
+           ); 
+}
+
+=head2 getObjectXML(pid => $pid)
+
+=cut
+sub getObjectXML {
+    my $self = shift;
+    my %args = (pid => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    
+    my $pid  = $args{pid};
+     
+    delete $args{pid};
+    
+    my %defaults = ();
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'getObjectXML' , $self->_GET('/objects/' . $pid . '/objectXML', $form_data)
+           );  
+}
+
+=head2 purgeDatastream(pid => $pid , dsID => $dsID , %args)
+
+=cut
+sub purgeDatastream {
+    my $self = shift;
+    my %args = (pid => undef , dsID => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need dsID" unless $args{dsID};
+    
+    my $pid  = $args{pid};
+    my $dsID = $args{dsID};
+     
+    delete $args{pid};
+    delete $args{dsID};
+    
+    my %defaults = ();
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'purgeDatastream' , $self->_DELETE('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
+           );  
+}
 
 =head1 SEE ALSO
 
