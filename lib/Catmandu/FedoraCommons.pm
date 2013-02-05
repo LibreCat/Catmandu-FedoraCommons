@@ -171,7 +171,8 @@ sub _DELETE {
     
     my $query = join("&",@parts);
    
-    my $req = DELETE $self->{baseurl} . $path . '?' . $query;
+    my $req = DELETE sprintf("%s%s%s", $self->{baseurl} , $path , $query ? '?' . $query : "");
+    
     $req->authorization_basic($self->{username}, $self->{password});
 
     defined $callback ?
@@ -835,6 +836,173 @@ sub purgeDatastream {
             'purgeDatastream' , $self->_DELETE('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
            );  
 }
+
+=head2 purgeObject(pid => $pid, %args)
+
+=cut
+sub purgeObject {
+    my $self = shift;
+    my %args = (pid => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    
+    my $pid  = $args{pid};
+     
+    delete $args{pid};
+    
+    my %defaults = ();
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'purgeObject' , $self->_DELETE('/objects/' . $pid, $form_data)
+           );
+}
+
+=head2 purgeRelationship(pid => $pid, relation => [ $subject, $predicate, $object] [, dataType => $dataType])
+
+=cut
+sub purgeRelationship {
+    my $self = shift;
+    my %args = (pid => undef , relation => undef, @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need relation" unless defined $args{relation} && ref $args{relation} eq 'ARRAY';
+    
+    my $pid       = $args{pid};
+    my $subject   = $args{relation}->[0];
+    my $predicate = $args{relation}->[1];
+    my $object    = $args{relation}->[2];
+    my $dataType  = $args{dataType};
+    my $isLiteral = is_uri($object) ? "false" : "true";
+    
+    my $form_data = [
+        { subject   => $subject },
+        { predicate => $predicate },
+        { object    => $object },
+        { dataType  => $dataType },
+        { isLiteral => $isLiteral },
+    ];
+
+    return Catmandu::FedoraCommons::Response->factory(
+               'purgeRelationship' , $self->_DELETE('/objects/' . $pid . '/relationships', $form_data)
+           );
+}
+
+=head2 setDatastreamState(pid => $pid, dsID => $dsID, dsState => $dsState)
+
+=cut
+sub setDatastreamState {
+    my $self = shift;
+    my %args = (pid => undef , dsID => undef, dsState => undef , @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need dsID" unless $args{dsID};
+    Carp::croak "need dsState" unless $args{dsState};
+    
+    my $pid     = $args{pid};
+    my $dsID    = $args{dsID};
+     
+    delete $args{pid};
+    delete $args{dsID};
+    
+    my %defaults = ();
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'setDatastreamState' , $self->_PUT('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
+           );
+}
+
+=head2 setDatastreamVersionable(pid => $pid, dsID => $dsID, versionable => $versionable)
+
+=cut
+sub setDatastreamVersionable {
+    my $self = shift;
+    my %args = (pid => undef , dsID => undef, versionable => undef , @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need dsID" unless $args{dsID};
+    Carp::croak "need versionable" unless $args{versionable};
+    
+    my $pid     = $args{pid};
+    my $dsID    = $args{dsID};
+     
+    delete $args{pid};
+    delete $args{dsID};
+    
+    my %defaults = ();
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'setDatastreamVersionable' , $self->_PUT('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
+           ); 
+}
+
+=head2 validate(pid => $pid)
+
+=cut
+sub validate {
+    my $self = shift;
+    my %args = (pid => undef , @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    
+    my $pid     = $args{pid};
+     
+    delete $args{pid};
+    
+    my %defaults = ();
+    
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'validate' , $self->_GET('/objects/' . $pid . '/validate', $form_data)
+           );
+}
+
+=head2 upload(file => $file)
+
+=cut
+sub upload {
+    my $self = shift;
+    my %args = (file => undef , @_);
+    
+    Carp::croak "need file" unless $args{file};
+    
+    my $file = $args{file};
+
+    delete $args{file};
+    
+    my $form_data = [ { file => [ "$file"] }];
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'upload' , $self->_POST('/upload', $form_data)
+           );
+}
+
 
 =head1 SEE ALSO
 

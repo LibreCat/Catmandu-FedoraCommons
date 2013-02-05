@@ -38,6 +38,7 @@ use Catmandu::FedoraCommons::Model::listMethods;
 use Catmandu::FedoraCommons::Model::findObjects;
 use Catmandu::FedoraCommons::Model::datastreamProfile;
 use Catmandu::FedoraCommons::Model::pidList;
+use Catmandu::FedoraCommons::Model::validate;
 use JSON;
 
 sub factory {
@@ -142,6 +143,15 @@ sub parse_content {
     }
     elsif ($method eq 'modifyDatastream') {
         return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
+    }
+    elsif ($method eq 'setDatastreamState') {
+        return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
+    }
+    elsif ($method eq 'setDatastreamVersionable') {
+        return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
+    }
+    elsif ($method eq 'validate') {
+        return Catmandu::FedoraCommons::Model::validate->parse($xml);
     }
     else {
         Carp::croak "no model found for $method";
