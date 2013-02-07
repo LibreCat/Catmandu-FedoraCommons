@@ -1,8 +1,25 @@
-Catmandu-FedoraCommons
+Catmandu-FedoraCommons - Perl interface to Fedora Commons using the REST-based API-A,API-M
 
-Work in progress.
+ use Catmandu::FedoraCommons;
+ 
+ my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
 
-Perl API to the Fedora Commons REST API. We envision access and modify interfaces
-plus Catmandu::Importer/Catmandu::Store functionality.
+ my $result = $fedora->findObjects(terms=>'*');
 
+ die "error" unless $result->is_ok;
+
+ my $hits = $res->parse_content;
+
+ for my $hit (@{ $hits }) {
+    printf "%s\n" , $hit->{pid};
+ }
+
+ my $result = $fedora->listDatastreams(pid => 'demo:29')->parse_content;
+
+ $fedora->addDatastream(
+                pid => 'demo:29', 
+                dsID => 'TEST' , 
+                file => 't/marc.xml',
+                mimeType => 'text/xml' , 
+                controlGroup => 'X');
 
