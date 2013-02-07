@@ -12,7 +12,9 @@ sub parse {
     $xc->registerNs('oai_dc','http://www.openarchives.org/OAI/2.0/oai_dc/');
     $xc->registerNs('dc','http://purl.org/dc/elements/1.1/');
     
-    my @nodes = $xc->findnodes("/foxml:digitalObject/foxml:objectProperties//foxml:property");
+    my @nodes;
+    
+    @nodes = $xc->findnodes("/foxml:digitalObject/foxml:objectProperties//foxml:property");
     
     my $result;
     
@@ -25,7 +27,7 @@ sub parse {
         $result->{objectProperties}->{$name} = $value;
     }
     
-    my @nodes = $xc->findnodes("//audit:auditTrail/audit:record");
+    @nodes = $xc->findnodes("//audit:auditTrail/audit:record");
     
     my @auditTrail = ();
 
@@ -51,7 +53,7 @@ sub parse {
 
     $result->{auditTrail} = \@auditTrail;
     
-    my @nodes = $xc->findnodes("//oai_dc:dc/*");
+    @nodes = $xc->findnodes("//oai_dc:dc/*");
         
     for my $node (@nodes) {
         my $name  = $node->nodeName;

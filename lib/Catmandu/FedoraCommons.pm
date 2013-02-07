@@ -74,7 +74,9 @@ sub _GET {
     my @parts;
     for my $part (@$data) {
         my ($key) = keys %$part;
-        push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
+        my $name  = uri_escape($key) || "";
+        my $value = uri_escape($part->{$key}) || "";
+        push @parts , "$name=$value";
     }
     
     my $query = join("&",@parts);
@@ -101,7 +103,9 @@ sub _POST {
             $content = [ $key => $part->{$key} ];
         }
         else {
-            push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
+            my $name  = uri_escape($key) || "";
+            my $value = uri_escape($part->{$key}) || "";
+            push @parts , "$name=$value";
         }
     }
     
@@ -170,7 +174,9 @@ sub _DELETE {
     my @parts;
     for my $part (@$data) {
         my ($key) = keys %$part;
-        push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
+        my $name  = uri_escape($key) || "";
+        my $value = uri_escape($part->{$key}) || "";
+        push @parts , "$name=$value";
     }
     
     my $query = join("&",@parts);

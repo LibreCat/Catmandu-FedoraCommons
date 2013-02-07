@@ -11,7 +11,9 @@ sub parse {
 
     my $result = {};
 
-    my @nodes = $dom->findnodes("/t:result/t:listSession/*");
+    my @nodes;
+    
+    @nodes = $dom->findnodes("/t:result/t:listSession/*");
 
     for my $node (@nodes) {
         my $name  = $node->nodeName;
@@ -19,7 +21,7 @@ sub parse {
         $result->{$name} = $value;
     }
 
-    my @nodes = $dom->findnodes("/t:result/t:resultList/t:objectFields");
+    @nodes = $dom->findnodes("/t:result/t:resultList/t:objectFields");
 
     for my $node (@nodes) {
         my @vals  = $node->findnodes("./*");

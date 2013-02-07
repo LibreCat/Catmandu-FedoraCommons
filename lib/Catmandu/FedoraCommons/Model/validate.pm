@@ -11,7 +11,9 @@ sub parse {
   
     $result->{asOfDateTime} = $dom->findnodes("/m:validation/m:asOfDateTime")->[0]->textContent;
     
-    my @nodes = $dom->findnodes("/m:validation/m:contentModels/m:model");
+    my @nodes;
+    
+    @nodes = $dom->findnodes("/m:validation/m:contentModels/m:model");
     
     for my $node (@nodes) {
         my $value = $node->textContent;
@@ -19,7 +21,7 @@ sub parse {
         push @{$result->{model}} , $value;
     }
     
-    my @nodes = $dom->findnodes("/m:validation/m:datastreamProblems/m:datastream");
+    @nodes = $dom->findnodes("/m:validation/m:datastreamProblems/m:datastream");
     
     for my $node (@nodes) {
         my $dsID  = $node->getAttribute('datastreamID');
@@ -35,7 +37,7 @@ sub parse {
         push @{$result->{datastream}} , $datastream;
     }
     
-    my @nodes = $dom->findnodes("/m:validation/m:problems/m:problem");
+    @nodes = $dom->findnodes("/m:validation/m:problems/m:problem");
     
     for my $node (@nodes) {
         my $value = $node->textContent;
@@ -48,8 +50,7 @@ sub parse {
 
     my $valid = $dom->firstChild()->getAttribute('valid');
     $result->{valid} = $valid;
-
-    
+ 
     return $result;
 }
 
