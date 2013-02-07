@@ -134,7 +134,7 @@ sub _PUT {
         my ($key) = keys %$part;
         
         if (ref $part->{$key} eq 'ARRAY') {
-            $content = [ $key => $part->{$key} ];
+            $content = $part->{$key}->[0];
         }
         else {
             push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
@@ -146,7 +146,11 @@ sub _PUT {
     my $req;
     
     if (defined $content) {
-        $req = PUT $self->{baseurl} . $path . '?' . $query, Content_Type => 'form-data' , Content => $content;
+        $req = PUT $self->{baseurl} . $path . '?' . $query;
+        open(my $fh,'<',$content) or Carp::croak "can't open $content : $!";
+        local($/) = undef;
+        $req->content(scalar(<$fh>));
+        close($fh);
     }
     else {
         # Need a Content_Type text/xml because of a Fedora 'ingest' feature that requires it...
@@ -509,10 +513,14 @@ sub addDatastream {
     delete $args{url};
     delete $args{file};
     
-    my %defaults = ( dsLocation => $url , controlGroup => 'E' , versionable => 'false');
+    my %defaults = ( versionable => 'false');
     
     if (defined $file) {
         $defaults{file} = ["$file"];
+        $defaults{controlGroup} = 'M';
+    }
+    elsif (defined $url) {
+        $defaults{dsLocation} = $url;
         $defaults{controlGroup} = 'M';
     }
     
@@ -641,7 +649,7 @@ sub getDatastreamHistory {
     }
     
     return Catmandu::FedoraCommons::Response->factory(
-            'getDatastreamHistory' , $self->_GET('/objects/' . $pid . '/datastreams/' . $dsID . '/versions', $form_data)
+            'getDatastreamHistory' , $self->_GET('/objects/' . $pid . '/datastreams/' . $dsID . '/history', $form_data)
            );  
 }
 
@@ -712,7 +720,7 @@ sub getRelationships {
         $predicate = $args{relation}->[1];
     }
     
-    my %defaults = (subject => $subject, predicate => $predicate);
+    my %defaults = (subject => $subject, predicate => $predicate, format => 'xml');
     
     my %values = (%defaults,%args);  
     my $form_data = [];
@@ -766,7 +774,6 @@ sub ingest {
 
 =head2 modifyDatastream(pid => $pid , dsID => $dsID, file => $filename , %args)
 
- [TODO: uploading of files doesn't work]
 =cut
 sub modifyDatastream {
     my $self = shift;
@@ -786,11 +793,15 @@ sub modifyDatastream {
     delete $args{url};
     delete $args{file};
     
-    my %defaults = ( dsLocation => $url , controlGroup => 'E' , versionable => 'false');
+    my %defaults = (versionable => 'false');
     
     if (defined $file) {
         $defaults{file} = ["$file"];
         $defaults{controlGroup} = 'M';
+    }
+    elsif (defined $url) {
+        $defaults{dsLocation} = $url;
+        $defaults{controlGroup} = 'E';
     }
     
     my %values = (%defaults,%args);  
@@ -802,6 +813,33 @@ sub modifyDatastream {
     
     return Catmandu::FedoraCommons::Response->factory(
             'modifyDatastream' , $self->_PUT('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
+           );
+}
+
+=head2 modifyObject(pid => $pid, %args)
+
+=cut
+sub modifyObject {
+    my $self = shift;
+    my %args = (pid => undef , @_);
+    
+    Carp::croak "need pid" unless $args{pid};
+    
+    my $pid  = $args{pid};
+     
+    delete $args{pid};
+    
+    my %defaults = ();
+
+    my %values = (%defaults,%args);  
+    my $form_data = [];
+                   
+    for my $name (keys %values) {
+        push @$form_data , { $name => $values{$name} };
+    }
+    
+    return Catmandu::FedoraCommons::Response->factory(
+            'modifyObject' , $self->_PUT('/objects/' . $pid , $form_data)
            );
 }
 

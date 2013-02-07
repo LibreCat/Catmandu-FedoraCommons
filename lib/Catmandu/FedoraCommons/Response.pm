@@ -39,6 +39,9 @@ use Catmandu::FedoraCommons::Model::findObjects;
 use Catmandu::FedoraCommons::Model::datastreamProfile;
 use Catmandu::FedoraCommons::Model::pidList;
 use Catmandu::FedoraCommons::Model::validate;
+use Catmandu::FedoraCommons::Model::getRelationships;
+use Catmandu::FedoraCommons::Model::export;
+use Catmandu::FedoraCommons::Model::datastreamHistory;
 use JSON;
 
 sub factory {
@@ -54,7 +57,7 @@ Returns true when the result Fedora Commons response contains no errors.
 sub is_ok {
     my ($self) = @_;
     
-    $self->{response}->code eq '200';
+    $self->{response}->code =~ /^(200|201|202)$/;
 }
 
 =head2 error()
@@ -103,7 +106,26 @@ sub parse_content {
     my $method = $self->{method};
     my $xml    = $self->raw;
 
-    unless ($self->content_type =~ /(text|application)\/(xml|json)/)  {
+    if ($method eq 'addRelationship') {
+        return 1;
+    }
+    elsif ($method eq 'ingest') {
+        return { pid => $xml };
+    }
+    elsif ($method eq 'modifyObject') {
+        return { date => $xml };
+    }
+    elsif ($method eq 'purgeObject') {
+        return { date => $xml };
+    }
+    elsif ($method eq 'purgeRelationship') {
+        return { purged => $xml };
+    }
+    elsif ($method eq 'upload') {
+        return { id => $xml };
+    }
+    
+    unless ($self->content_type =~ /(text|application)\/(xml|rdf\+xml|json)/)  {
         Carp::carp "You probably want to use the raw() method";
         return undef;
     }
@@ -138,6 +160,9 @@ sub parse_content {
     elsif ($method eq 'getDatastream') {
         return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
     }
+    elsif ($method eq 'getDatastreamHistory') {
+        return Catmandu::FedoraCommons::Model::datastreamHistory->parse($xml);
+    }
     elsif ($method eq 'getNextPID') {
         return Catmandu::FedoraCommons::Model::pidList->parse($xml);
     }
@@ -152,6 +177,15 @@ sub parse_content {
     }
     elsif ($method eq 'validate') {
         return Catmandu::FedoraCommons::Model::validate->parse($xml);
+    }
+    elsif ($method eq 'getRelationships') {
+        return Catmandu::FedoraCommons::Model::getRelationships->parse($xml);
+    }
+    elsif ($method eq 'export') {
+        return Catmandu::FedoraCommons::Model::export->parse($xml);
+    }
+    elsif ($method eq 'getObjectXML') {
+        return Catmandu::FedoraCommons::Model::export->parse($xml);
     }
     else {
         Carp::croak "no model found for $method";
