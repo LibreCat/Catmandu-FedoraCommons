@@ -1,6 +1,6 @@
 =head1 NAME
 
-Catmandu::FedoraCommons::Response - Catmandu::FedoraCommons object
+Catmandu::FedoraCommons::Response - Perl model for generic Fedora Commons REST API responses
 
 =head1 SYNOPSIS
 
@@ -10,6 +10,10 @@ Catmandu::FedoraCommons::Response - Catmandu::FedoraCommons object
   
   my $result = $fedora->findObjects(terms=>'*');
   
+  die $resut->error unless $result->is_ok;
+  
+  my $obj = $result->parse_content;
+  
   $result->is_ok;
   $result->error;
   $result->raw;
@@ -17,6 +21,7 @@ Catmandu::FedoraCommons::Response - Catmandu::FedoraCommons object
   $result->length;
   $result->date;
   $result->parse_content();
+  $result->parse_content($my_model);
   
 =head1 DESCRIPTION
 
@@ -49,6 +54,7 @@ use Catmandu::FedoraCommons::Model::modifyObject;
 use Catmandu::FedoraCommons::Model::purgeObject;
 use Catmandu::FedoraCommons::Model::upload;
 use Catmandu::FedoraCommons::Model::purgeRelationship;
+use Catmandu::FedoraCommons::Model::getDatastreamDissemination;
 
 sub factory {
     my ($class, $method , $response) = @_;    
@@ -80,10 +86,10 @@ sub error {
 =head2 parse_content($model)
 
 Returns a Perl representation of the Fedora Commons response. Optionally a  model object can be provided that
-implements a $obj->parse($xml) method and returns a Perl object. If no model is provided then the default 
-models from the Catmandu::FedoraCommons::Model packages are used.
+implements a $obj->parse($bytes) method and returns a Perl object. If no model is provided then default 
+models from the Catmandu::FedoraCommons::Model namespace are used.
 
-Example:
+ Example:
 
  package MyParser;
  
@@ -93,7 +99,7 @@ Example:
  }
  
  sub parse {
-     my ($self,$xml) = @_;
+     my ($self,$bytes) = @_;
      ...
      return $perl
  }
@@ -132,6 +138,12 @@ sub parse_content {
     }
     elsif ($method eq 'purgeDatastream') {
         return Catmandu::FedoraCommons::Model::purgeDatastream->parse($xml);
+    }
+    elsif ($method eq 'getDatastreamDissemination') {
+        return Catmandu::FedoraCommons::Model::getDatastreamDissemination->parse($xml);
+    }
+    elsif ($method eq 'getDissemination') {
+        return Catmandu::FedoraCommons::Model::getDatastreamDissemination->parse($xml);
     }
     
     unless ($self->content_type =~ /(text|application)\/(xml|rdf\+xml)/)  {

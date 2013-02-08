@@ -20,7 +20,7 @@ Catmandu::FedoraCommons - Low level Catmandu interface to the Fedora Commons RES
   
 =head1 DESCRIPTION
 
-The Catmandu::FedoraCommons is an Perl API to the Fedora Commons REST API (http://www.fedora.info/). 
+Catmandu::FedoraCommons is an Perl API to the Fedora Commons REST API (http://www.fedora.info/). 
 Supported versions are Fedora Commons 3.6 or better. 
 
 =head1 ACCESS METHODS
@@ -194,7 +194,7 @@ sub _DELETE {
 
 =head2 findObjects(terms => $terms , maxResults => $maxResults)
 
-Executes a search query on the Fedora Commons server. One of the query or terms parameter is required. Query 
+Execute a search query on the Fedora Commons server. One of 'query' or 'terms' is required. Query 
 contains a phrase optionally including '*' and '?' wildcards. Terms contain one or more conditions separated by space.
 A condition is a field followed by an operator, followed by a value. The = operator will match if the field's 
 entire value matches the value given. The ~ operator will match on phrases within fields, and accepts 
@@ -213,7 +213,7 @@ Examples:
   terms => "mDate>2002-10-2 mDate<2002-10-2T12:00:00"
   
 Optionally a maxResults parameter may be specified limiting the number of search results (default is 20). This method
-returns a L<Catmandu::FedoraCommons::Response> object.
+returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::findObjects> model.
 
 =cut
 sub findObjects {
@@ -243,7 +243,8 @@ sub findObjects {
 
 =head2 resumeFindObjects(sessionToken => $token)
 
-This method returns the next batch of search results. This method returns a L<Catmandu::FedoraCommons::Response> object.
+This method returns the next batch of search results. This method returns a L<Catmandu::FedoraCommons::Response> object
+with a L<Catmandu::FedoraCommons::Model::findObjects> model.
 
 Example:
 
@@ -294,7 +295,8 @@ sub resumeFindObjects {
 
 This method returns a datastream from the Fedora Commons repository. Required parameters are
 the identifier of the object $pid and the identifier of the datastream $dsID. Optionally a datestamp $asOfDateTime
-can be provides. This method returns a L<Catmandu::FedoraCommons::Response> object.
+can be provided. This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getDatastreamDissemination>
+model.
 
 To stream the contents of the datastream a callback function can be provided.
 
@@ -336,11 +338,14 @@ sub getDatastreamDissemination {
 
 =head2 getDissemination(pid => $pid , sdefPid => $sdefPid , method => $method , %method_parameters , callback => \&callback)
 
-This method execute a dissemination method on the Fedora Commons server. Required parameters are the identifier
-of the object $pid, the identifier of the service definition $sdefPid and the name of the method $method. Optionally
+This method execute a dissemination method on the Fedora Commons server. Required parametes are the object $pid, the service definition $sdefPid and the name of the method $method. Optionally
 further method parameters can be provided and a callback function to stream the results (see getDatastreamDissemination).
-This method returns a L<Catmandu::FedoraCommons::Response> object.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getDatastreamDissemination> model.
 
+  Example:
+  
+  $fedora->getDissemination(pid => 'demo:29', sdefPid => 'demo:27' , method => 'resizeImage' , width => 100, callback => \&process);
+  
 =cut
 sub getDissemination {
     my $self = shift;
@@ -373,9 +378,17 @@ sub getDissemination {
 
 =head2 getObjectHistory(pid => $pid)
 
-This method returns the version history of an object. Required is one parameter: the identifier of the object $pid.
-This method returns a L<Catmandu::FedoraCommons::Response> object.
+This method returns the version history of an object. Required is the object $pid.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getObjectHistory> model.
 
+ Example:
+ 
+ my $obj = $fedora->getObjectHistory(pid => 'demo:29')->parse_content;
+ 
+ for @{$obj->{objectChangeDate}} {}
+    print "$_\n;
+ }
+ 
 =cut
 sub getObjectHistory {
     my $self = shift;
@@ -403,9 +416,16 @@ sub getObjectHistory {
 
 =head2 getObjectProfile(pid => $pid, asOfDateTime => $date)
 
-This method returns a detailed description of an object. Required is the identifier of the object $pid. Optionally a
-version date asOfDateTime can be provied. This method returns a L<Catmandu::FedoraCommons::Response> object.
+This method returns a detailed description of an object. Required is the object $pid. Optionally a
+version date asOfDateTime can be provided. This method returns a L<Catmandu::FedoraCommons::Response> object
+with a L<Catmandu::FedoraCommons::Model::getObjectProfile> model.
 
+  Example:
+
+   my $obj = $fedora->getObjectProfile(pid => 'demo:29')->parse_content;
+
+   printf "Label: %s\n" , $obj->{objLabel};
+  
 =cut
 sub getObjectProfile {
     my $self = shift;
@@ -433,9 +453,18 @@ sub getObjectProfile {
 
 =head2 listDatastreams(pid => $pid, asOfDateTime => $date)
 
-This method returns a list of datastreams provided in the object. Required is the identifier of the object $pid.
-Optionally a version date asOfDateTime can be provided. This method returns a L<Catmandu::FedoraCommons::Response> object.
+This method returns a list of datastreams provided in the object. Required is the object $pid.
+Optionally a version date asOfDateTime can be provided. This method returns a L<Catmandu::FedoraCommons::Response> object
+with a L<Catmandu::FedoraCommons::Model::listDatastreams> model.
 
+  Example:
+  
+  my $obj = $fedora->listDatastreams(pid => 'demo:29')->parse_content;
+  
+  for (@{ $obj->{datastream}} ) {
+     printf "Label: %s\n" , $_->{label};
+  }
+  
 =cut
 sub listDatastreams {
     my $self = shift;
@@ -463,9 +492,22 @@ sub listDatastreams {
 
 =head2 listMethods(pid => $pid , sdefPid => $sdefPid , asOfDateTime => $date)
 
-This method return a list of methods that can be executed on an object. Required in the identifier of the object $pid
-and the identifier of a service definition object $sdefPid. Optionally a version date asOfDateTime can be provided.
-This method returns a L<Catmandu::FedoraCommons::Response> object.
+This method return a list of methods that can be executed on an object. Required is the object $pid
+and the object $sdefPid. Optionally a version date asOfDateTime can be provided.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::listMethods>
+model.
+
+  Example:
+  
+   my $obj = $fedora->listMethods(pid => 'demo:29')->parse_content;
+   
+   for ( @{ $obj->{sDef} }) {
+        printf "[%s]\n" , $_->{$pid};
+        
+        for my $m ( @{ $_->{method} } ) {
+            printf "\t%s\n" , $m->{name};
+        }
+   }
 
 =cut
 sub listMethods {
@@ -500,6 +542,19 @@ sub listMethods {
 
 =head2 addDatastream(pid => $pid , dsID => $dsID, file => $filename , %args)
 
+This method adds a data stream to the object. Required parameters are the object $pid, a new datastream $dsID and
+a remote $url or local $file which contains the content. Optionally any of these datastream modifiers
+may be provided: controlGroup, altIDs, dsLabel, versionable, dsState, formatURI, checksumType, checksum,
+mimeType, logMessage. See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile>
+model.
+
+ Example:
+ 
+   my $obj = $fedora->addDatastream(pid => 'demo:29', dsID => 'TEST' , file => 'README', mimeType => 'text/plain')->parse_content;
+   
+   print "Uploaded at: %s\n" , $obj->{dateTime};
+   
 =cut
 sub addDatastream {
     my $self = shift;
@@ -544,6 +599,15 @@ sub addDatastream {
 
 =head2 addRelationship(pid => $pid, relation => [ $subject, $predicate, $object] [, dataType => $dataType])
 
+This methods adds a triple to the 'RELS-EXT' data stream of the object. Requires parameters are the object
+$pid and a relation as a triple ARRAY reference. Optionally the $datatype of the literal may be provided.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::addRelationship>
+model.
+
+  Example:
+  
+  $fedora->addRelationship(pid => 'demo:29' , relation => [ 'info:fedora/demo:29' , 'http://my.org/name' , 'Peter']);
+
 =cut
 sub addRelationship {
     my $self = shift;
@@ -574,6 +638,20 @@ sub addRelationship {
 
 =head2 export(pid => $pid [, format => $format , context => $context , encoding => $encoding])
 
+This method exports the data model of the object in FOXML,METS or ATOM. Required is $pid of the object.
+Optionally a $context may be provided and the $format of the export.
+See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::export>
+model.
+
+ Example:
+ 
+   my $res = $fedora->export(pid => 'demo:29');
+   
+   print $res->raw;
+   
+   print "%s\n" , $res->parse_content->{objectProperties}->{label};
+
 =cut
 sub export {
     my $self = shift;
@@ -601,6 +679,18 @@ sub export {
 
 =head2 getDatastream(pid => $pid, dsID => $dsID , %args)
 
+This method return metadata about a data stream. Required is the object $pid and the $dsID of the data stream.
+Optionally a version 'asOfDateTime' can be provided and a 'validateChecksum' check.
+See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile>
+model.
+
+  Example:
+  
+  my $obj = $fedora->getDatastream(pid => 'demo:29', dsID => 'DC')->parse_content;
+  
+  printf "Label: %s\n" , $obj->{profile}->{dsLabel};
+ 
 =cut
 sub getDatastream {
     my $self = shift;
@@ -631,6 +721,18 @@ sub getDatastream {
 
 =head2 getDatastreamHistory(pid => $pid , dsID => $dsID , %args)
 
+This method returns the version history of a data stream. Required paramter is the $pid of the object and the $dsID of the
+data stream. This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamHistory>
+model.
+
+  Example:
+  
+  my $obj = $fedora->getDatastreamHistory(pid => 'demo:29', dsID => 'DC')->parse_content;
+  
+  for (@{ $obj->{profile} }) {
+     printf "Version: %s\n" , $_->{dsCreateDate};
+  }
+
 =cut
 sub getDatastreamHistory {
     my $self = shift;
@@ -659,8 +761,15 @@ sub getDatastreamHistory {
            );  
 }
 
-=head2 getNextPID(namespace => $namespace)
+=head2 getNextPID(namespace => $namespace, numPIDs => $numPIDs)
 
+This method generates a new pid. Optionally a 'namespace' can be provided and the required 'numPIDs' you need. This method returns a L<Catmandu::FedoraCommons::Response> object with a
+L<Catmandu::FedoraCommons::Model::pidList> model.
+
+    Example:
+    
+    my $pid = $fedora->getNextPID()->parse_content->[0];
+    
 =cut
 sub getNextPID {
     my $self = shift;
@@ -682,6 +791,18 @@ sub getNextPID {
 
 =head2 getObjectXML(pid => $pid)
 
+This method exports the data model of the object in FOXML format. Required is $pid of the object.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::export>
+model.
+
+ Example:
+ 
+   my $res = $fedora->export(pid => 'demo:29');
+   
+   print $res->raw;
+   
+   print "%s\n" , $res->parse_content->{objectProperties}->{label};
+   
 =cut
 sub getObjectXML {
     my $self = shift;
@@ -709,6 +830,24 @@ sub getObjectXML {
 
 =head2 getRelationships(pid => $pid [, relation => [$subject, $predicate, undef] , format => $format ])
 
+This method returns all RELS-EXT triples for an object. Required parameter is the $pid of the object.
+Optionally the triples may be filetered using the 'relation' parameter. Format defines the returned format.
+See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getRelationships> model.
+
+ Example:
+ 
+ my $obj = $fedora->getRelationships(pid => 'demo:29')->parse_content;
+
+ my $iter = $obj->get_statements();
+ 
+ print "Names of things:\n";
+ while (my $st = $iter->next) {
+     my $s = $st->subject;
+     my $name = $st->object;
+     print "The name of $s is $name\n";
+ }
+ 
 =cut
 sub getRelationships {
     my $self = shift;
@@ -743,6 +882,18 @@ sub getRelationships {
 
 =head2 ingest(pid => 'new' , file => $filename , format => $format , %args)
 
+This method ingest an object into Fedora Commons. Required is the $pid of the new object (which can be
+the string 'new' when Fedora has to generate a new pid), and the $filename to upload writen as $format.
+Optionally the following parameters can be provided: label, encoding, namespace, ownerId, logMessage.
+See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::ingest> model.
+
+  Example:
+
+  my $obj = $fedora->ingest(pid => 'new', file => 't/obj_demo_40.zip', format => 'info:fedora/fedora-system:ATOMZip-1.1')->parse_content;
+  
+  printf "created: %s\n" , $obj->{pid};
+  
 =cut
 sub ingest {
     my $self = shift;
@@ -780,6 +931,19 @@ sub ingest {
 
 =head2 modifyDatastream(pid => $pid , dsID => $dsID, file => $filename , %args)
 
+This method updated a data stream in the object. Required parameters are the object $pid, a new datastream $dsID and
+a remote $url or local $file which contains the content. Optionally any of these datastream modifiers
+may be provided: controlGroup, altIDs, dsLabel, versionable, dsState, formatURI, checksumType, checksum,
+mimeType, logMessage. See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile>
+model.
+
+ Example:
+ 
+   my $obj = $fedora->modifyDatastream(pid => 'demo:29', dsID => 'TEST' , file => 'README', mimeType => 'text/plain')->parse_content;
+   
+   print "Uploaded at: %s\n" , $obj->{dateTime};
+   
 =cut
 sub modifyDatastream {
     my $self = shift;
@@ -822,8 +986,16 @@ sub modifyDatastream {
            );
 }
 
-=head2 modifyObject(pid => $pid, %args)
+=head2 modifyObject(pid => $pid, label => $label , ownerId => ownerId , state => $state , logMessage => $logMessage , lastModifiedDate => $lastModifiedDate)
 
+This method updated the metadata of an object. Required parameter is the $pid of the object. Optionally one or more of label, ownerId, state, logMessage
+and lastModifiedDate can be provided.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::modifyObject> model.
+
+  Example:
+  
+  $fedora->modifyObject(pid => 'demo:29' , state => 'I');
+  
 =cut
 sub modifyObject {
     my $self = shift;
@@ -849,10 +1021,17 @@ sub modifyObject {
            );
 }
 
-=head2 modifyDatastream(pid => $pid , dsID => $dsID)
+=head2 purgeDatastream(pid => $pid , dsID => $dsID , startDT => $startDT , endDT => $endDT , logMessage => $logMessage)
 
-=head2 purgeDatastream(pid => $pid , dsID => $dsID , %args)
+This method purges a data stream from an object. Required parameters is the $pid of the object and the $dsID of the data
+stream. Optionally a range $startDT to $endDT versions can be provided to be deleted.
+See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::purgeDatastream> model.
 
+  Example:
+  
+  $fedora->purgeDatastream(pid => 'demo:29', dsID => 'TEST')->parse_content;
+  
 =cut
 sub purgeDatastream {
     my $self = shift;
@@ -881,7 +1060,15 @@ sub purgeDatastream {
            );  
 }
 
-=head2 purgeObject(pid => $pid, %args)
+=head2 purgeObject(pid => $pid, logMessage => $logMessage)
+
+This method purges an object from Fedora Commons. Required parameter is the $pid of the object. Optionally a $logMessage can
+be provided.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::purgeObject> model.
+
+  Example:
+  
+  $fedora->purgeObject(pid => 'demo:29');
 
 =cut
 sub purgeObject {
@@ -909,6 +1096,14 @@ sub purgeObject {
 }
 
 =head2 purgeRelationship(pid => $pid, relation => [ $subject, $predicate, $object] [, dataType => $dataType])
+
+This method removes a triple from the RELS-EXT data stream of an object. Required parameters are the $pid of
+the object and the relation to be deleted. Optionally the $dataType of the literal can be provided.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::purgeRelationship> model.
+
+  Example:
+  
+  $fedora->purgeRelationship(pid => 'demo:29' , relation => [ 'info:fedora/demo:29' , 'http://my.org/name' , 'Peter'])
 
 =cut
 sub purgeRelationship {
@@ -940,6 +1135,14 @@ sub purgeRelationship {
 
 =head2 setDatastreamState(pid => $pid, dsID => $dsID, dsState => $dsState)
 
+This method can be used to put a data stream on/offline. Required parameters are the $pid of the object , the
+$dsID of the data stream and the required new $dsState ((A)ctive, (I)nactive, (D)eleted).
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile> model.
+  
+  Example:
+  
+  $fedora->setDatastreamState(pid => 'demo:29' , dsID => 'url' , dsState => 'I');
+  
 =cut
 sub setDatastreamState {
     my $self = shift;
@@ -971,6 +1174,14 @@ sub setDatastreamState {
 
 =head2 setDatastreamVersionable(pid => $pid, dsID => $dsID, versionable => $versionable)
 
+This method updates the versionable state of a data stream. Required parameters are the $pid of the object,
+the $dsID of the data stream and the new $versionable (true|false) state.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile> model.
+
+  Example:
+  
+  $fedora->setDatastreamVersionable(pid => 'demo:29' , dsID => 'url' , versionable => 'false');
+  
 =cut
 sub setDatastreamVersionable {
     my $self = shift;
@@ -1002,6 +1213,15 @@ sub setDatastreamVersionable {
 
 =head2 validate(pid => $pid)
 
+This method can be used to validate the content of an object. Required parameter is the $pid of the object.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::validate> model.
+
+  Example:
+  
+  my $obj = $fedora->validate(pid => 'demo:29')->parse_content;
+  
+  print "Is valid: %s\n" , $obj->{valid};
+  
 =cut
 sub validate {
     my $self = shift;
@@ -1029,6 +1249,15 @@ sub validate {
 
 =head2 upload(file => $file)
 
+This method uploads a file to the Fedora Server. Required parameter is the $file name.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::upload-> model.
+
+ Example:
+ 
+ my $obj = $fedora->upload(file => 't/marc.xml')->parse_content;
+ 
+ print "Upload id: %s\n" , $obj->{id};
+ 
 =cut
 sub upload {
     my $self = shift;
