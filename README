@@ -23,3 +23,8 @@ Catmandu-FedoraCommons - Perl interface to Fedora Commons using the REST-based A
                 mimeType => 'text/xml' , 
                 controlGroup => 'X');
 
+Status:
+-=-=-=-
+
+ This is work in progress. The low level Fedora Commons methods should be working. We are now working 
+on a Catmandu::Store implementation of Fedora Commons.
