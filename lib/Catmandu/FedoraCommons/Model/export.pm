@@ -1,3 +1,52 @@
+=head1 NAME
+
+Catmandu::FedoraCommons::Model::export - Perl model for the Fedora 'export' and 'getObjectXML' REST call
+
+=head1 SYNOPSIS
+
+  use Catmandu::FedoraCommons;
+  
+  my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
+  
+  my $obj = $fedora->export(pid => 'demo:29')->parse_content;
+  
+  {
+     'pid'  => 'demo:29' ,
+     'version' => '1.1',
+     'objectProperties' => {
+         'state' => 'Inactive' ,
+         'label' => 'Data Object for Image Manipulation Demo' ,
+         'ownerId' => 'fedoraAdmin' ,
+         'createdDate' => '2008-07-02T05:09:42.015Z' ,
+         'lastModifiedDate' => '2013-02-07T19:57:27.140Z' ,
+     },
+     'auditTrail' => [
+         {
+         'id' => 'AUDREC1' ,
+         'process' => 'Fedora API-M' ,
+         'action' => 'addDatastream' ,
+         'componentID' => 'TEST' ,
+         'responsibility' => 'fedoraAdmin' ,
+         'date' => '2013-02-07T18:42:24.518Z' ,
+         'justification' => '' ,
+         },
+     ],
+     'dc' => {
+         'title'   => [ 'Coliseum in Rome' ] ,
+         'creator' => [ 'Thornton Staples' ] ,
+         'subject' => [ 'Architecture, Roman' ] ,
+         'description' => [ 'Image of Coliseum in Rome' ] ,
+         'publisher'   => [ 'University of Virginia Library' ] ,
+         'format'      => [ 'image/jpeg' ] ,
+         'identifier'  => [ 'demo:29' ],
+     },
+  }
+  
+=head1 SEE ALSO
+
+L<Catmandu::FedoraCommons>
+
+=cut
 package Catmandu::FedoraCommons::Model::export;
 
 use XML::LibXML;

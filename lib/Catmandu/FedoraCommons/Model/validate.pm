@@ -1,3 +1,41 @@
+=head1 NAME
+
+Catmandu::FedoraCommons::Model::validate - Perl model for the Fedora 'validate' REST call
+
+=head1 SYNOPSIS
+
+  use Catmandu::FedoraCommons;
+  
+  my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
+  
+  my $obj = $fedora->validate(pid => 'demo:29')->parse_content;
+  
+  {
+    'pid'   => 'demo:29' ,
+    'valid' => 'false' ,
+    'asOfDateTime' => '2013-02-08T10:09:09.273Z' ,
+    'model' => [
+       'info:fedora/demo:UVA_STD_IMAGE' ,
+       'info:fedora/fedora-system:FedoraObject-3.0' ,
+    ],
+    'problem' => [
+       'test'
+    ] ,
+    'datastream' => [
+        {
+         'dsID' => 'url' ,
+         'problem' => [
+            "Datastream 'url' is does not have the FORMAT_URI and MIME_TYPE attributes required by 'demo:UVA_STD_IMAGE'" ,
+         ]
+        }
+    ] ,
+  }
+  
+=head1 SEE ALSO
+
+L<Catmandu::FedoraCommons>
+
+=cut
 package Catmandu::FedoraCommons::Model::validate;
 
 use XML::LibXML;

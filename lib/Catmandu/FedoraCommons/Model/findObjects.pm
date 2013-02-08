@@ -1,3 +1,44 @@
+=head1 NAME
+
+Catmandu::FedoraCommons::Model::findObjects - Perl model for the Fedora 'findObjects' and 'resumeFindObjects' REST call
+
+=head1 SYNOPSIS
+
+  use Catmandu::FedoraCommons;
+  
+  my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
+  
+  my $obj = $fedora->findObjects(terms=>'*')->parse_content;
+  
+  {
+    'token'  => '92b0ae4028f9459ce7cd0600f562adb2' ,
+    'cursor' => 0,
+    'expirationDate' => '2013-02-08T09:37:55.860Z',
+    'results' => [
+        {
+        'pid'     => 'demo:29' ,
+        'label'   => 'Data Object for Image Manipulation Demo' ,
+        'state'   => 'I' ,
+        'ownerId' => 'fedoraAdmin' ,
+        'cDate'   => '2008-07-02T05:09:42.015Z' ,
+        'mDate'   => '2013-02-07T19:57:27.140Z' ,
+        'dcmDate' => '2008-07-02T05:09:43.234Z' ,
+        'title'   => [ 'Coliseum in Rome' ] ,
+        'creator' => [ 'Thornton Staples' ] ,
+        'subject' => [ 'Architecture, Roman' ] ,
+        'description' => [ 'Image of Coliseum in Rome' ] ,
+        'publisher'   => [ 'University of Virginia Library' ] ,
+        'format'      => [ 'image/jpeg' ] ,
+        'identifier'  => [ 'demo:29' ],
+        },
+    ] ,
+  }
+  
+=head1 SEE ALSO
+
+L<Catmandu::FedoraCommons>
+
+=cut
 package Catmandu::FedoraCommons::Model::findObjects;
 
 use XML::LibXML;

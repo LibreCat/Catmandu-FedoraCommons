@@ -1,4 +1,4 @@
-use Test::More tests=>69;
+use Test::More tests=>72;
 use Data::Dumper;
 
 use Catmandu::FedoraCommons;
@@ -9,19 +9,19 @@ ok($res = $x->addDatastream(pid => 'demo:29', dsID => 'TEST' , file => 'README',
 ok($res->is_ok, 'is_ok');
 ok($obj = $res->parse_content, 'parse_content');
 ok($obj->{dsID} eq 'TEST','got a new dsID'); 
-ok($obj->{dsMIME} eq 'text/plain','text/plain type');
+ok($obj->{profile}->{dsMIME} eq 'text/plain','text/plain type');
 
 ok($res = $x->addDatastream(pid => 'demo:29', dsID => 'TEST2' , url => 'http://www.google.com', mimeType => 'text/html' , controlGroup => 'R'), 'addDatastream(url)');
 ok($res->is_ok, 'is_ok');
 ok($obj = $res->parse_content, 'parse_content');
 ok($obj->{dsID} eq 'TEST2','got a new dsID'); 
-ok($obj->{dsControlGroup} eq 'R','got R as control group');
+ok($obj->{profile}->{dsControlGroup} eq 'R','got R as control group');
 
 ok($res = $x->addDatastream(pid => 'demo:29', dsID => 'TEST3' , file => 't/marc.xml', mimeType => 'text/xml' , controlGroup => 'X'), 'addDatastream(xml)');
 ok($res->is_ok, 'is_ok');
 ok($obj = $res->parse_content, 'parse_content');
 ok($obj->{dsID} eq 'TEST3','got a new dsID'); 
-ok($obj->{dsControlGroup} eq 'X','got X as control group');
+ok($obj->{profile}->{dsControlGroup} eq 'X','got X as control group');
 
 ok($res = $x->purgeDatastream(pid => 'demo:29', dsID => 'TEST'),'purge TEST');
 ok($res = $x->purgeDatastream(pid => 'demo:29', dsID => 'TEST2'),'purge TEST2');
@@ -45,7 +45,7 @@ ok($obj = $res->parse_content,'parse_content');
 ok($res = $x->getDatastream(pid => 'demo:29', dsID => 'DC'),'getDatastream');
 ok($res->is_ok,'is_ok');
 ok($obj = $res->parse_content, 'parse_content');
-is($obj->{dsFormatURI},'http://www.openarchives.org/OAI/2.0/oai_dc/','check model');
+is($obj->{profile}->{dsFormatURI},'http://www.openarchives.org/OAI/2.0/oai_dc/','check model');
 
 ok($res = $x->getDatastreamHistory(pid => 'demo:29', dsID => 'DC'),'getDatastreamHistory');
 ok($res->is_ok,'is_ok');
@@ -78,6 +78,10 @@ ok($res->is_ok,'is_ok');
 ok($obj = $res->parse_content, 'parse_content');
 
 ok($res = $x->modifyObject(pid => 'demo:29' , state => 'I'),'modifyObject');
+ok($res->is_ok,'is_ok');
+ok($obj = $res->parse_content, 'parse_content');
+
+ok($res = $x->modifyObject(pid => 'demo:29' , state => 'A'),'modifyObject');
 ok($res->is_ok,'is_ok');
 ok($obj = $res->parse_content, 'parse_content');
 

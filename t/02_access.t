@@ -54,7 +54,7 @@ ok(@{ $obj->{datastream} } == 3, 'count datastreams');
 ok($res = $x->listMethods(pid => 'demo:29'));
 ok($res->is_ok,'is_ok');
 ok($obj = $res->parse_content, 'parse_content');
-ok(@{ $obj->{method} } == 11, 'count methods');
+ok(@{ $obj->{sDef} } == 2, 'count methods');
 
 sub process {
     my ( $data, $response, $protocol ) = @_;

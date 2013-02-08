@@ -42,7 +42,13 @@ use Catmandu::FedoraCommons::Model::validate;
 use Catmandu::FedoraCommons::Model::getRelationships;
 use Catmandu::FedoraCommons::Model::export;
 use Catmandu::FedoraCommons::Model::datastreamHistory;
-use JSON;
+use Catmandu::FedoraCommons::Model::purgeDatastream;
+use Catmandu::FedoraCommons::Model::addRelationship;
+use Catmandu::FedoraCommons::Model::ingest;
+use Catmandu::FedoraCommons::Model::modifyObject;
+use Catmandu::FedoraCommons::Model::purgeObject;
+use Catmandu::FedoraCommons::Model::upload;
+use Catmandu::FedoraCommons::Model::purgeRelationship;
 
 sub factory {
     my ($class, $method , $response) = @_;    
@@ -107,25 +113,28 @@ sub parse_content {
     my $xml    = $self->raw;
 
     if ($method eq 'addRelationship') {
-        return 1;
+        return Catmandu::FedoraCommons::Model::addRelationship->parse($xml);
     }
     elsif ($method eq 'ingest') {
-        return { pid => $xml };
+        return Catmandu::FedoraCommons::Model::ingest->parse($xml);
     }
     elsif ($method eq 'modifyObject') {
-        return { date => $xml };
+        return Catmandu::FedoraCommons::Model::modifyObject->parse($xml);
     }
     elsif ($method eq 'purgeObject') {
-        return { date => $xml };
+        return Catmandu::FedoraCommons::Model::purgeObject->parse($xml);
     }
     elsif ($method eq 'purgeRelationship') {
-        return { purged => $xml };
+        return Catmandu::FedoraCommons::Model::purgeRelationship->parse($xml);
     }
     elsif ($method eq 'upload') {
-        return { id => $xml };
+        return Catmandu::FedoraCommons::Model::upload->parse($xml);
+    }
+    elsif ($method eq 'purgeDatastream') {
+        return Catmandu::FedoraCommons::Model::purgeDatastream->parse($xml);
     }
     
-    unless ($self->content_type =~ /(text|application)\/(xml|rdf\+xml|json)/)  {
+    unless ($self->content_type =~ /(text|application)\/(xml|rdf\+xml)/)  {
         Carp::carp "You probably want to use the raw() method";
         return undef;
     }
@@ -153,9 +162,6 @@ sub parse_content {
     }
     elsif ($method eq 'addDatastream') {
         return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);
-    }
-    elsif ($method eq 'purgeDatastream') {
-        return decode_json($xml);
     }
     elsif ($method eq 'getDatastream') {
         return Catmandu::FedoraCommons::Model::datastreamProfile->parse($xml);

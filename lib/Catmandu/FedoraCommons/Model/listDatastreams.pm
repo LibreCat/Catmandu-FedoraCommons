@@ -1,3 +1,42 @@
+=head1 NAME
+
+Catmandu::FedoraCommons::Model::listDatastreams - Perl model for the Fedora 'listDatastreams'  REST call
+
+=head1 SYNOPSIS
+
+  use Catmandu::FedoraCommons;
+  
+  my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
+  
+  my $obj = $fedora->listDatastreams(pid => 'demo:29')->parse_content;
+  
+  {
+    'pid'     => 'demo:29' ,
+    'baseURL' => 'http://localhost:8080/fedora/' ,
+    'datastream' => [
+        {
+          'dsid'  => 'DC' ,
+          'label' => 'Dublin Core Record for this object' ,
+          'mimeType' => 'text/xml' ,
+        }, 
+        {
+          'dsid'  => 'RELS-EXT' ,
+          'label' => 'RDF Statements about this object' ,
+          'mimeType' => 'application/rdf+xml' ,
+        },
+        {
+          'dsid'  => 'url' ,
+          'label' => 'Thorny\'s Coliseum high jpg image' ,
+          'mimeType' => 'text/xml' ,
+        },
+    ] ,
+  }
+  
+=head1 SEE ALSO
+
+L<Catmandu::FedoraCommons>
+
+=cut
 package Catmandu::FedoraCommons::Model::listDatastreams;
 
 use XML::LibXML;
