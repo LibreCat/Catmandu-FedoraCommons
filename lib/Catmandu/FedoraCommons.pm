@@ -138,7 +138,7 @@ sub _PUT {
         my ($key) = keys %$part;
         
         if (ref $part->{$key} eq 'ARRAY') {
-            $content = $part->{$key}->[0];
+            $content = $part->{$key};
         }
         else {
             push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
@@ -150,11 +150,19 @@ sub _PUT {
     my $req;
     
     if (defined $content) {
-        $req = PUT $self->{baseurl} . $path . '?' . $query;
-        open(my $fh,'<',$content) or Carp::croak "can't open $content : $!";
-        local($/) = undef;
-        $req->content(scalar(<$fh>));
-        close($fh);
+        if (@$content == 1) {
+            my $file = $content->[0];
+            $req = PUT $self->{baseurl} . $path . '?' . $query;
+            open(my $fh,'<',$file) or Carp::croak "can't open $file : $!";
+            local($/) = undef;
+            $req->content(scalar(<$fh>));
+            close($fh);
+        }
+        else {
+            my $xml = $content->[-1];
+            $req = PUT $self->{baseurl} . $path . '?' . $query;
+            $req->content($xml);
+        }
     }
     else {
         # Need a Content_Type text/xml because of a Fedora 'ingest' feature that requires it...
@@ -542,8 +550,10 @@ sub listMethods {
 
 =head2 addDatastream(pid => $pid , dsID => $dsID, file => $filename , %args)
 
+=head2 addDatastream(pid => $pid , dsID => $dsID, xml => $xml , %args)
+
 This method adds a data stream to the object. Required parameters are the object $pid, a new datastream $dsID and
-a remote $url or local $file which contains the content. Optionally any of these datastream modifiers
+a remote $url, a local $file or an $xml string which contains the content. Optionally any of these datastream modifiers
 may be provided: controlGroup, altIDs, dsLabel, versionable, dsState, formatURI, checksumType, checksum,
 mimeType, logMessage. See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile>
@@ -558,27 +568,34 @@ model.
 =cut
 sub addDatastream {
     my $self = shift;
-    my %args = (pid => undef , dsID => undef, url => undef , file => undef , @_);
+    my %args = (pid => undef , dsID => undef, url => undef , file => undef , xml => undef , @_);
     
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
-    Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file};
+    Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file} || defined $args{xml};
     
     my $pid  = $args{pid};
     my $dsID = $args{dsID};
     my $url  = $args{url};
     my $file = $args{file};
+    my $xml  = $args{xml};
      
     delete $args{pid};
     delete $args{dsID};
     delete $args{url};
     delete $args{file};
+    delete $args{xml};
     
     my %defaults = ( versionable => 'false');
     
     if (defined $file) {
         $defaults{file} = ["$file"];
         $defaults{controlGroup} = 'M';
+    }
+    elsif (defined $xml) {
+        $defaults{file} = [ undef , 'upload.xml' , Content => $xml ];
+        $defaults{controlGroup} = 'X';
+        $defaults{mimeType} = 'text/xml';
     }
     elsif (defined $url) {
         $defaults{dsLocation} = $url;
@@ -931,8 +948,10 @@ sub ingest {
 
 =head2 modifyDatastream(pid => $pid , dsID => $dsID, file => $filename , %args)
 
+=head2 modifyDatastream(pid => $pid , dsID => $dsID, xml => $xml , %args)
+
 This method updated a data stream in the object. Required parameters are the object $pid, a new datastream $dsID and
-a remote $url or local $file which contains the content. Optionally any of these datastream modifiers
+a remote $url, a local $file or an $xml string which contains the content. Optionally any of these datastream modifiers
 may be provided: controlGroup, altIDs, dsLabel, versionable, dsState, formatURI, checksumType, checksum,
 mimeType, logMessage. See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile>
@@ -947,27 +966,34 @@ model.
 =cut
 sub modifyDatastream {
     my $self = shift;
-    my %args = (pid => undef , dsID => undef, url => undef , file => undef , @_);
+    my %args = (pid => undef , dsID => undef, url => undef , file => undef , xml => undef , @_);
     
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
-    Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file};
+    Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file} || defined $args{xml};
     
     my $pid  = $args{pid};
     my $dsID = $args{dsID};
     my $url  = $args{url};
     my $file = $args{file};
+    my $xml  = $args{xml};
      
     delete $args{pid};
     delete $args{dsID};
     delete $args{url};
     delete $args{file};
+    delete $args{xml};
     
     my %defaults = (versionable => 'false');
     
     if (defined $file) {
         $defaults{file} = ["$file"];
         $defaults{controlGroup} = 'M';
+    }
+    elsif (defined $xml) {
+        $defaults{file} = [undef, 'upload.xml' , Content => $xml];
+        $defaults{controlGroup} = 'X';
+        $defaults{mimeType} = 'text/xml';
     }
     elsif (defined $url) {
         $defaults{dsLocation} = $url;
