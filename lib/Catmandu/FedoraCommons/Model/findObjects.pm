@@ -78,6 +78,7 @@ sub parse {
                 push @{ $rec->{$name} } , $value;
             }
         }
+   
         push @{$result->{results}}, $rec;
     }
 

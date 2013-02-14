@@ -15,6 +15,7 @@ my $build = Module::Build->new(
     requires => {
         'perl' => '5.10.1',
         'Data::Validate::URI' => '0.06',
+        'Data::Validate::Type' => '1.4.0',
         'HTTP::Request::Common' => '6.03',
         'RDF::Trine' => '1.003',
         'XML::LibXML' => '2.0014',

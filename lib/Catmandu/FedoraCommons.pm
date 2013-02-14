@@ -895,12 +895,12 @@ sub getRelationships {
            );
 }
 
-=head2 ingest(pid => $pid , file => $filename , format => $format , %args)
+=head2 ingest(pid => $pid , file => $filename , xml => $xml , format => $format , %args)
 
-=head2 ingest(pid => 'new' , file => $filename , format => $format , %args)
+=head2 ingest(pid => 'new' , file => $filename , xml => $xml , format => $format , %args)
 
 This method ingest an object into Fedora Commons. Required is the $pid of the new object (which can be
-the string 'new' when Fedora has to generate a new pid), and the $filename to upload writen as $format.
+the string 'new' when Fedora has to generate a new pid), and the $filename or $xml to upload writen as $format.
 Optionally the following parameters can be provided: label, encoding, namespace, ownerId, logMessage.
 See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::ingest> model.
@@ -914,15 +914,18 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
 =cut
 sub ingest {
     my $self = shift;
-    my %args = (pid => undef , file => undef , @_);
+    my %args = (pid => undef , file => undef , xml => undef , @_);
     
     Carp::croak "need pid" unless $args{pid};
+    Carp::croak "need file or xml" unless defined $args{file} || defined $args{xml};
     
     my $pid     = $args{pid};
     my $file    = $args{file};
+    my $xml     = $args{xml};
      
     delete $args{pid};
     delete $args{file};
+    delete $args{xml};
 
     my %defaults = (ignoreMime => 'true');
     
@@ -930,6 +933,11 @@ sub ingest {
         $defaults{format}   = 'info:fedora/fedora-system:FOXML-1.1';
         $defaults{encoding} = 'UTF-8';
         $defaults{file}     = ["$file"];
+    }
+    elsif (defined $xml) {
+        $defaults{format}   = 'info:fedora/fedora-system:FOXML-1.1';
+        $defaults{encoding} = 'UTF-8';
+        $defaults{file} = [undef, 'upload.xml' , Content => $xml];
     }
     
     my %values = (%defaults,%args);  
