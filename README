@@ -1,5 +1,27 @@
 Catmandu-FedoraCommons - Perl interface to Fedora Commons using the REST-based API-A,API-M
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-
 
+High-Level
+-=-=-=-=-=
+
+ use Catmandu::Store::FedoraCommons;
+
+ my $store = Catmandu::Store::FedoraCommons->new(
+					baseurl  => 'http://localhost:8080/fedora' ,
+					username => 'fedoraAdmin' ,
+					password => 'fedoraAdmin');
+
+ my $obj = { title => [ 'My Title' ] , creator => [ 'Patrick'] };
+
+ $store->bag->add($obj);
+
+ $store->bag->each(sub {
+	my $obj = $_[0];
+	printf "Title: %s\n" , $obj->{title}->[0];
+ });
+
+Low-Level
+-=-=-=-=-=
  use Catmandu::FedoraCommons;
  
  my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
