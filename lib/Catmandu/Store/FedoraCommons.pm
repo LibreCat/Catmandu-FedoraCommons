@@ -173,3 +173,83 @@ sub delete_all {
 }
 
 1;
+
+=head1 NAME
+
+Catmandu::Store::FedoraCommons - A Catmandu::Store plugin for the Fedora Commons repository
+
+=head1 SYNOPSIS
+
+ use Catmandu::Store::FedoraCommons;
+
+ my $store = Catmandu::Store::DBI->new(
+         baseurl  => 'http://localhost:8080/fedora',
+         username => 'fedoraAdmin',
+         password => 'fedoraAdmin',
+         model    => 'Catmandu::Store::FedoraCommons::DC' # default
+ );
+
+ # We use the DC model, lets store some DC
+ my $obj1 = $store->bag->add({ 
+                    title => ['The Master and Margarita'] , 
+                    creator => ['Bulgakov, Mikhail'] }
+            );
+
+ printf "obj1 stored as %s\n" , $obj1->{_id};
+
+ # Force an id in the store
+ my $obj2 = $store->bag->add({ _id => 'demo:120812' , title => ['The Master and Margarita']  });
+
+ my $obj3 = $store->bag->get('demo:120812');
+
+ $store->bag->delete('demo:120812');
+
+ $store->bag->delete_all;
+
+ # All bags are iterators
+ $store->bag->each(sub {  
+     my $obj = $_[0];
+     my $pid = $obj->{_id};
+     my $ds = $x->fedora->listDatastreams(pid => $pid)->parse_content;
+ });
+ 
+ $store->bag->take(10)->each(sub { ... });
+ 
+=head1 DESCRIPTION
+
+A Catmandu::Store::FedoraCommons is a Perl package that can store data into
+FedoraCommons backed databases. The database as a whole is called a 'store'.
+Databases also have compartments (e.g. tables) called Catmandu::Bag-s. In 
+the current version we support only one default bag.
+
+By default Catmandu::Store::FedoraCommons works with a Dublin Core data model.
+You can use the add,get and delete methods of the store to retrieve and insert Perl HASH-es that
+mimic Dublin Core records. Optionally other models can be provided by creating
+a model package that implements a 'get' and 'update' method.
+
+=head1 METHODS
+
+=head2 new(baseurl => $fedora_baseurl , username => $username , password => $password , model => $model )
+
+Create a new Catmandu::Store::FedoraCommons store at $fedora_baseurl. Optionally provide a name of
+a $model to serialize your Perl hashes into a Fedora Commons model.
+
+=head2 bag
+
+Create or retieve a bag. Returns a Catmandu::Bag.
+
+=head2 fedora
+
+Returns a low level Catmandu::FedoraCommons reference.
+
+=head1 SEE ALSO
+
+L<Catmandu::Bag>, L<Catmandu::Searchable>, L<Catmandu::FedoraCommons>
+
+=head1 AUTHOR
+
+=over
+
+=item * Patrick Hochstenbach, C<< <patrick.hochstenbach at ugent.be> >>
+
+=cut
