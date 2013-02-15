@@ -6,10 +6,12 @@ High-Level
 
  use Catmandu::Store::FedoraCommons;
 
+ # Create a default FedoraCommons store with a Dublin Core model
  my $store = Catmandu::Store::FedoraCommons->new(
-					baseurl  => 'http://localhost:8080/fedora' ,
-					username => 'fedoraAdmin' ,
-					password => 'fedoraAdmin');
+                baseurl  => 'http://localhost:8080/fedora' ,
+                username => 'fedoraAdmin' ,
+                password => 'fedoraAdmin' ,
+                model => 'Catmandu::Store::FedoraCommons::DC' );
 
  my $obj = { title => [ 'My Title' ] , creator => [ 'Patrick'] };
 
@@ -17,7 +19,15 @@ High-Level
 
  $store->bag->each(sub {
 	my $obj = $_[0];
+	my $pid = $obj->{_id};
+	
 	printf "Title: %s\n" , $obj->{title}->[0];
+	
+	my $ds = $store->fedora->listDatastreams(pid => $pid);
+	
+	for (@{ $ds->{datastream} }) {
+	    printf " %s\n" , $ds->{dsid};
+	}
  });
 
 Low-Level
