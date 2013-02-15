@@ -20,10 +20,15 @@ SKIP: {
      
      $x->bag->each(sub { 
          my $obj = $_[0];
-      #   print "$obj->{_id}\n";
+         
+         my $ds = $x->fedora->listDatastreams(pid => $obj->{_id})->parse_content;
+         
+         print Dumper($ds);
      });
      
-     #my $obj = $x->bag->get('demo:29');
+     my $obj = $x->bag->get('demo:29');
+     
+     print Dumper($obj);
      
      #delete $obj->{contributor};
      

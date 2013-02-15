@@ -9,7 +9,7 @@ with 'Catmandu::Store';
 has baseurl  => (is => 'ro' , required => 1);
 has username => (is => 'ro' , default => sub { '' } );
 has password => (is => 'ro' , default => sub { '' } );
-has model    => (is => 'ro' , default => sub { 'DC' } );
+has model    => (is => 'ro' , default => sub { 'Catmandu::Store::FedoraCommons::DC' } );
 
 has fedora => (
     is       => 'ro',
@@ -28,50 +28,35 @@ package Catmandu::Store::FedoraCommons::Bag;
 
 use Catmandu::Sane;
 use Catmandu::Hits;
-use Catmandu::Store::FedoraCommons::DC;
 use Catmandu::Store::FedoraCommons::FOXML;
 use Moo;
 use Clone qw(clone);
 
 with 'Catmandu::Bag';
 
-sub _create_model {
-    my ($self, $result) = @_;
-    my $pid = $result->{pid};
+sub _get_model {
+    my ($self, $obj) = @_;
+    my $pid    = $obj->{pid};
+    my $fedora = $self->store->fedora;
+    my $model  = $self->store->model;
     
-    return undef unless $pid;
+    eval "use $model";
+    my $x   = $model->new(fedora => $fedora);
+    my $res = $x->get($pid);
     
-    my $model = $self->store->model;
-    my $res   = $self->store->fedora->getDatastreamDissemination( pid => $pid , dsID => $model);
-    
-    return undef unless $res->is_ok;
-    
-    my $data  = $res->parse_content;
-    my $perl  = Catmandu::Store::FedoraCommons::DC->new->deserialize($data);
-    
-    { _id => $pid , %$perl };
+    return $res;
 }
 
 sub _update_model {
-    my ($self, $data) = @_;
-    my $pid = $data->{_id};
-
-    return undef unless $pid;
-    
-    my $serializer = Catmandu::Store::FedoraCommons::DC->new;
-    
-    my ($valid,$reason) = $serializer->valid($data);
-    
-    unless ($valid) {
-        warn "data is not valid";
-        return undef;
-    }
-    
-    my $xml    = $serializer->serialize($data);
+    my ($self, $obj) = @_;
+    my $fedora = $self->store->fedora;
     my $model  = $self->store->model;
-    my $result = $self->store->fedora->modifyDatastream( pid => $pid , dsID => $model, xml => $xml);
 
-    return $result->is_ok;
+    eval "use $model";
+    my $x   = $model->new(fedora => $fedora);
+    my $res = $x->update($obj);
+
+    return $res;
 }
 
 sub _ingest_model {
@@ -86,7 +71,7 @@ sub _ingest_model {
         return undef;
     }
     
-    my $xml    = $serializer->serialize($data);
+    my $xml = $serializer->serialize($data);
     
     my $result = $self->store->fedora->ingest( pid => 'new' , xml => $xml , format => 'info:fedora/fedora-system:FOXML-1.1');
     
@@ -94,7 +79,7 @@ sub _ingest_model {
     
     $data->{_id} = $result->parse_content->{pid};
     
-    return 1;
+    return $self->_update_model($data);
 }
 
 sub generator {
@@ -128,11 +113,11 @@ sub generator {
             $row  = 0;
             $hits = $res->parse_content;
             
-            return $self->_create_model($result);
+            return $self->_get_model($result);
         }  
         else {
             my $result = $hits->{results}->[ $row++ ];
-            return $self->_create_model($result);
+            return $self->_get_model($result);
         }
     };
 }
@@ -156,7 +141,7 @@ sub add {
 
 sub get {
     my ($self, $id) = @_;
-    return $self->_create_model({ pid => $id });
+    return $self->_get_model({ pid => $id });
 }
 
 sub delete {

@@ -4,6 +4,46 @@ use Moo;
 use XML::LibXML;
 use Data::Validate::Type qw(:boolean_tests);
 
+has fedora => (is => 'ro' , required => 1);
+
+# REQUIRED METHODS FOR A MODEL
+
+sub get {
+    my ($self,$pid) = @_;
+    
+    return undef unless $pid;
+    
+    my $res   = $self->fedora->getDatastreamDissemination( pid => $pid , dsID => 'DC');
+    
+    return undef unless $res->is_ok;
+    
+    my $data  = $res->parse_content;
+    my $perl  = $self->deserialize($data);
+    
+    { _id => $pid , %$perl };
+}
+
+sub update {
+    my ($self,$obj) = @_;
+    my $pid = $obj->{_id};
+
+    return undef unless $pid;
+    
+    my ($valid,$reason) = $self->valid($obj);
+    
+    unless ($valid) {
+        warn "data is not valid";
+        return undef;
+    }
+    
+    my $xml    = $self->serialize($obj);
+    my $result = $self->fedora->modifyDatastream( pid => $pid , dsID => 'DC', xml => $xml);
+
+    return $result->is_ok;
+}
+
+# HELPER METHODS
+
 # Die fast data validator
 sub valid {
     my ($self,$perl) = @_;

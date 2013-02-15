@@ -48,5 +48,4 @@ Low-Level
 Status:
 -=-=-=-
 
- This is work in progress. The low level Fedora Commons methods should be working. We are now working 
-on a Catmandu::Store implementation of Fedora Commons.
+ This is work in progress. The low level Fedora Commons methods should be working. We are now working on a Catmandu::Store implementation of Fedora Commons.
