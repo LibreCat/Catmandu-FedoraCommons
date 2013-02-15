@@ -1,4 +1,4 @@
-use Test::More tests=>3;
+use Test::More tests=>21;
 use Data::Dumper;
 
 BEGIN { use_ok( 'Catmandu::Store::FedoraCommons' ); }
@@ -18,23 +18,30 @@ SKIP: {
      
      ok($x->fedora, 'fedora');
      
-     $x->bag->each(sub { 
+     my $count = 0;
+     $x->bag->take(10)->each(sub { 
          my $obj = $_[0];
-         
-         my $ds = $x->fedora->listDatastreams(pid => $obj->{_id})->parse_content;
-         
-         print Dumper($ds);
+         $count++;
+         ok($obj,"take(10) - $count");
      });
      
-     my $obj = $x->bag->get('demo:29');
+     ok($obj = $x->bag->add({ title => ['test']}), 'add');
      
-     print Dumper($obj);
+     my $pid = $obj->{_id};
      
-     #delete $obj->{contributor};
+     ok($pid,"pid = $pid");
      
-     #print Dumper($x->bag->delete('changeme:11'));
+     is($obj->{title}->[0] , 'test' , 'obj content ok');
+     
+     $obj->{creator}->[0] = 'Patrick';
+     
+     ok($x->bag->add($obj),'update using add');
+     
+     ok($x->bag->get($pid), 'get');
+     
+     is($obj->{creator}->[0] , 'Patrick' , 'obj content ok');
+     
+     ok($x->bag->delete($pid), "delete $pid");
      
      #print Dumper($x->bag->delete_all());
-     
-     print Dumper($x->bag->add({ title => ['test']}));
 }
