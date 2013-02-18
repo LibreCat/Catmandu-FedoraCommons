@@ -14,6 +14,7 @@ my $build = Module::Build->new(
     },
     requires => {
         'perl' => '5.10.1',
+        'Catmandu' => '0.05',
         'Data::Validate::URI' => '0.06',
         'Data::Validate::Type' => '1.4.0',
         'HTTP::Request::Common' => '6.03',
