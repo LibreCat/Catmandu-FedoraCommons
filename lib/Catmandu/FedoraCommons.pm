@@ -30,7 +30,7 @@ package Catmandu::FedoraCommons;
 
 use Catmandu::FedoraCommons::Response;
 
-our $VERSION = '0.2';
+our $VERSION = '0.21';
 use URI::Escape;
 use HTTP::Request::Common qw(GET POST DELETE PUT HEAD);
 use LWP::UserAgent;

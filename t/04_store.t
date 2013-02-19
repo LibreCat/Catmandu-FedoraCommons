@@ -12,7 +12,7 @@ my $pwd  = $ENV{FEDORA_PWD}  || "";
 SKIP: {
      skip "No Fedora server environment settings found (FEDORA_HOST,"
 	 . "FEDORA_PORT,FEDORA_USER,FEDORA_PWD).", 
-	 1 if (! $host || ! $port || ! $user || ! $pwd);
+	 19 if (! $host || ! $port || ! $user || ! $pwd);
 
      ok($x = Catmandu::Store::FedoraCommons->new(baseurl => "http://$host:$port/fedora", username => $user, password => $pwd), "new");
      
