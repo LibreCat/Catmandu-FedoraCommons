@@ -8,6 +8,7 @@ my $build = Module::Build->new(
     dist_author => [
         'Patrick Hochstenbach <patrick.hochstenbach@ugent.be>',
     ],
+    dist_version_from => 'lib/Catmandu/FedoraCommons.pm',
     build_requires => {
         'Software::License' => 0,
         'Test::More' => '0.98',
