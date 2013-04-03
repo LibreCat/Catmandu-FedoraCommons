@@ -14,5 +14,5 @@ SKIP: {
 	 . "FEDORA_PORT,FEDORA_USER,FEDORA_PWD).", 
 	 1 if (! $host || ! $port || ! $user || ! $pwd);
 
-     ok($x = Catmandu::FedoraCommons->new("http://$host:$port/fedora",$user,$pwd), "new");
+     ok(Catmandu::FedoraCommons->new("http://$host:$port/fedora",$user,$pwd), "new");
 }

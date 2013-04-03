@@ -18,6 +18,36 @@ Catmandu::FedoraCommons - Low level Catmandu interface to the Fedora Commons RES
        printf "%s\n" , $hit->{pid};
   }
   
+  # Or using the higher level Catmandu::Store codes you can do things like
+  
+  use Catmandu::Store::FedoraCommons;
+
+  my $store = Catmandu::Store::DBI->new(
+           baseurl  => 'http://localhost:8080/fedora',
+           username => 'fedoraAdmin',
+           password => 'fedoraAdmin',
+           model    => 'Catmandu::Store::FedoraCommons::DC' # default
+   );
+   
+  $store->bag->each(sub {
+        my $model = shift;
+        printf "title: %s\n" , join("" , @{ $model->{title} });
+        printf "creator: %s\n" , join("" , @{ $model->{creator} });
+        
+        my $pid = $obj->{_id};
+        my $ds  = $store->fedora->listDatastreams(pid => $pid)->parse_content;
+  });
+   
+  my $obj = $store->bag->add({ 
+        title => ['The Master and Margarita'] , 
+        creator => ['Bulgakov, Mikhail'] }
+  );
+  
+  $store->fedora->addDatastream(pid => $obj->{_id} , url => "http://myurl/rabbit.jpg");
+  
+  # Add your own perl version of a descriptive metadata model by implementing your own
+  # model that can do a serialize and deserialize.
+  
 =head1 DESCRIPTION
 
 Catmandu::FedoraCommons is an Perl API to the Fedora Commons REST API (http://www.fedora.info/). 
@@ -30,7 +60,7 @@ package Catmandu::FedoraCommons;
 
 use Catmandu::FedoraCommons::Response;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 use URI::Escape;
 use HTTP::Request::Common qw(GET POST DELETE PUT HEAD);
 use LWP::UserAgent;

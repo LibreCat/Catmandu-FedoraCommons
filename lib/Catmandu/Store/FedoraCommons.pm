@@ -182,7 +182,7 @@ Catmandu::Store::FedoraCommons - A Catmandu::Store plugin for the Fedora Commons
 
  use Catmandu::Store::FedoraCommons;
 
- my $store = Catmandu::Store::DBI->new(
+ my $store = Catmandu::Store::FedoraCommons->new(
          baseurl  => 'http://localhost:8080/fedora',
          username => 'fedoraAdmin',
          password => 'fedoraAdmin',
@@ -210,7 +210,7 @@ Catmandu::Store::FedoraCommons - A Catmandu::Store plugin for the Fedora Commons
  $store->bag->each(sub {  
      my $obj = $_[0];
      my $pid = $obj->{_id};
-     my $ds = $x->fedora->listDatastreams(pid => $pid)->parse_content;
+     my $ds  = $store->fedora->listDatastreams(pid => $pid)->parse_content;
  });
  
  $store->bag->take(10)->each(sub { ... });
