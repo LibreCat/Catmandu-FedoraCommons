@@ -25,6 +25,7 @@ my $build = Module::Build->new(
     },
     create_makefile_pl => 'traditional',
     create_license => 1,
+    script => ['bin/fedora_admin.pl'] ,
 );
 
 $build->create_build_script;
