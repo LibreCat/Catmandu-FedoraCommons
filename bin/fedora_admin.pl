@@ -228,14 +228,15 @@ See L<http://dev.perl.org/licenses/> for more information.
 =cut
 $|++;
 
-use Catmandu qw(store);
+use Catmandu -all;
 use Catmandu::Util;
 use Getopt::Long;
 use RDF::Trine;
 use Data::Dumper;
+use Cwd;
 
 my $database   = 'fedora';
-my $config     = undef;
+my $config     = $ENV{CATMANDU_CONF} // Cwd::getcwd();
 my $exporter   = 'YAML';
 my $importer   = 'YAML';
 my $yes        = undef;
@@ -252,9 +253,6 @@ my $cmd = shift;
 
 if (defined $config) {
    Catmandu->load($config);
-}
-else {
-   Catmandu->load;
 }
     
 unless (defined Catmandu->config->{store}->{$database}) {
@@ -765,7 +763,7 @@ options:
   --importer=<IMPORTER>
   --param foo=bar
   -y
-  -f directory_containing_catmandu.yml
+  -d directory_containing_catmandu.yml
 
 config file:
 
