@@ -39,7 +39,7 @@
 
 =head1 DESCRIPTION
 
-B<fedora_admin.pl> is a B<Fedora Commons>-compatible client that execture HTTP Rest commands
+B<fedora_admin.pl> is a B<Fedora Commons>-compatible client that execute HTTP Rest commands
 to a Fedora server.
 
 B<fedora_admin.pl> is intended to be conformat to Fedora Commons version up to Fedore 3.6.x.
