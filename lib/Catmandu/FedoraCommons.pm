@@ -4,6 +4,10 @@ Catmandu::FedoraCommons - Low level Catmandu interface to the Fedora Commons RES
 
 =head1 SYNOPSIS
 
+  # Use the command line tools 
+  $ fedora_admin.pl
+
+  # Or the low-level API-s
   use Catmandu::FedoraCommons;
   
   my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
@@ -60,7 +64,7 @@ package Catmandu::FedoraCommons;
 
 use Catmandu::FedoraCommons::Response;
 
-our $VERSION = '0.26';
+our $VERSION = '0.27';
 use URI::Escape;
 use HTTP::Request::Common qw(GET POST DELETE PUT HEAD);
 use LWP::UserAgent;
@@ -1352,6 +1356,14 @@ L<Catmandu::Model::listMethods>
 =over
 
 =item * Patrick Hochstenbach, C<< <patrick.hochstenbach at ugent.be> >>
+
+=head1 LICENSE AND COPYRIGHT
+
+This program is free software; you can redistribute it and/or modify it under the terms
+of either: the GNU General Public License as published by the Free Software Foundation;
+or the Artistic License.
+
+See L<http://dev.perl.org/licenses/> for more information.
 
 =cut
 

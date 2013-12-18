@@ -59,7 +59,9 @@ repository. Here is an example 'catmandu.yml' file:
        password: fedoraAdmin
 
 This file needs to be provided in the working directory or can be specified in the directory
-given by the -d option.
+given by the -d option or specified in the environment by setting CATMANDU_CONF
+
+  export CATMANDU_CONF=/etc/catamandu_conf_dir
 
 =head1 OPTIONS
 
