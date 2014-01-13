@@ -26,7 +26,7 @@ Catmandu::FedoraCommons - Low level Catmandu interface to the Fedora Commons RES
   
   use Catmandu::Store::FedoraCommons;
 
-  my $store = Catmandu::Store::DBI->new(
+  my $store = Catmandu::Store::FedoraCommons->new(
            baseurl  => 'http://localhost:8080/fedora',
            username => 'fedoraAdmin',
            password => 'fedoraAdmin',
@@ -38,7 +38,7 @@ Catmandu::FedoraCommons - Low level Catmandu interface to the Fedora Commons RES
         printf "title: %s\n" , join("" , @{ $model->{title} });
         printf "creator: %s\n" , join("" , @{ $model->{creator} });
         
-        my $pid = $obj->{_id};
+        my $pid = $model->{_id};
         my $ds  = $store->fedora->listDatastreams(pid => $pid)->parse_content;
   });
    
@@ -64,7 +64,7 @@ package Catmandu::FedoraCommons;
 
 use Catmandu::FedoraCommons::Response;
 
-our $VERSION = '0.27';
+our $VERSION = '0.271';
 use URI::Escape;
 use HTTP::Request::Common qw(GET POST DELETE PUT HEAD);
 use LWP::UserAgent;
