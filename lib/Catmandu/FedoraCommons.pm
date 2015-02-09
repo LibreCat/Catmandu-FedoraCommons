@@ -1357,6 +1357,8 @@ L<Catmandu::Model::listMethods>
 
 =item * Patrick Hochstenbach, C<< <patrick.hochstenbach at ugent.be> >>
 
+=back
+
 =head1 LICENSE AND COPYRIGHT
 
 This program is free software; you can redistribute it and/or modify it under the terms
