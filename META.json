@@ -69,7 +69,7 @@
          "web" : "https://github.com/LibreCat/Catmandu-FedoraCommons"
       }
    },
-   "version" : "0.271",
+   "version" : "0.272",
    "x_contributors" : [
       "Patrick Hochstenbach <patrick.hochstenbach@ugent.be>"
    ]
