@@ -1,4 +1,4 @@
-requires 'perl', 'v5.10.1';
+requires 'perl', 'v5.14';
 
 on 'test', sub {
   requires 'Test::Simple', '1.001003';
@@ -9,7 +9,7 @@ on 'test', sub {
 requires 'Catmandu', '0.9301';
 requires 'Data::Validate::URI', '0.06';
 requires 'Data::Validate::Type', '1.5.1';
-requires 'HTTP::Request::Common', '6.06';
+requires 'HTTP::Request::Common', '6.04';
 requires 'RDF::Trine', '1.014';
 requires 'Test::JSON', '0.11';
 requires 'XML::LibXML', '2.0121';
