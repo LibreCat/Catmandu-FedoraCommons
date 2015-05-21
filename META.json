@@ -52,6 +52,7 @@
          "requires" : {
             "Test::Exception" : "0.32",
             "Test::More" : "1.001003",
+            "Test::Pod" : "1.49",
             "Test::Simple" : "1.001003"
          }
       }

@@ -252,4 +252,6 @@ L<Catmandu::Bag>, L<Catmandu::Searchable>, L<Catmandu::FedoraCommons>
 
 =item * Patrick Hochstenbach, C<< <patrick.hochstenbach at ugent.be> >>
 
+=back
+
 =cut
