@@ -1,0 +1,7 @@
+Catmandu-FedoraCommons-*
+/.build
+!META.json
+LICENSE
+local
+cpanfile.snapshot
+.perl-version

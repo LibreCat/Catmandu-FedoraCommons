@@ -1,0 +1,5 @@
+Revision history for Catmandu-OAI
+
+{{$NEXT}}
+  - Upgrade to Dist::Milla
+  - Upgrade to latest Catmandu
