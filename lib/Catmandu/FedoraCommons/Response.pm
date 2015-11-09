@@ -55,6 +55,7 @@ use Catmandu::FedoraCommons::Model::purgeObject;
 use Catmandu::FedoraCommons::Model::upload;
 use Catmandu::FedoraCommons::Model::purgeRelationship;
 use Catmandu::FedoraCommons::Model::getDatastreamDissemination;
+use Catmandu::FedoraCommons::Model::describeRepository;
 
 sub factory {
     my ($class, $method , $response) = @_;    
@@ -204,6 +205,9 @@ sub parse_content {
     }
     elsif ($method eq 'getObjectXML') {
         return Catmandu::FedoraCommons::Model::export->parse($xml);
+    }
+    elsif ($method eq 'describeRepository') {
+        return Catmandu::FedoraCommons::Model::describeRepository->parse($xml);
     }
     else {
         Carp::croak "no model found for $method";

@@ -196,6 +196,7 @@ sub _PUT {
             my $xml = $content->[-1];
             $req = PUT $self->{baseurl} . $path . '?' . $query;
             $req->content($xml);
+            $req->header( 'Content-Length' => length($xml) );
         }
     }
     else {
@@ -577,6 +578,26 @@ sub listMethods {
             'listMethods' , $self->_GET('/objects/' . $pid . '/methods' . ( defined $sdefPid ? "/$sdefPid" : "" ), $form_data)
            );
 }
+=head2 describeRepository
+
+This method returns information about the fedora repository. No arguments required.
+This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::describeRepository> model.
+
+    Example:
+
+    my $desc = $fedora->describeRepository()->parse_content();
+
+=cut
+
+sub describeRepository {
+    my $self = $_[0];
+    my $form_data = [ { xml => "true" } ];
+
+    return Catmandu::FedoraCommons::Response->factory(
+        'describeRepository' , $self->_GET('/describe', $form_data)
+    );
+}
+*describe = \&describeRepository;
 
 =head1 MODIFY METHODS
 
@@ -1347,7 +1368,7 @@ sub upload {
 L<Catmandu::FedoraCommons::Response>,
 L<Catmandu::Model::findObjects>,
 L<Catmandu::Model::getObjectHistory>,
-L<Catmandu::Model::getObjectPrifule>,
+L<Catmandu::Model::getObjectProfile>,
 L<Catmandu::Model::listDatastreams>,
 L<Catmandu::Model::listMethods>
 

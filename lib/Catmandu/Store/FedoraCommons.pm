@@ -17,11 +17,49 @@ has fedora => (
     lazy     => 1,
     builder  => '_build_fedora',
 );
+has _repository_description => (
+    is => 'ro',
+    init_arg => undef,
+    lazy => 1,
+    builder => '_build_repository_description'
+);
+has _default_namespace => (
+    is => 'ro',
+    init_arg => undef,
+    lazy => 1,
+    builder => '_build_default_namespace'
+);
+has _pid_delimiter => (
+    is => 'ro', 
+    init_arg => undef,
+    lazy => 1, 
+    builder => '_build_pid_delimiter'
+);
 
 sub _build_fedora {
     my $self = $_[0];
     
     Catmandu::FedoraCommons->new($self->baseurl, $self->username, $self->password);
+}
+#namespace corresponds to name of bag
+#don't use "data", but use the internal default namespace of fedora
+around default_bag => sub {
+    my($orig,$self) = @_;
+    $self->_default_namespace();
+};
+
+sub _build_repository_description {
+    $_[0]->fedora->describeRepository()->parse_content();
+}
+sub _build_default_namespace {
+    my $self = $_[0];
+    my $desc = $self->_repository_description();
+    $desc->{repositoryPID}->{'PID-namespaceIdentifier'};
+}
+sub _build_pid_delimiter {
+    my $self = $_[0];
+    my $desc = $self->_repository_description();
+    $desc->{repositoryPID}->{'PID-delimiter'};
 }
 
 package Catmandu::Store::FedoraCommons::Bag;
@@ -31,8 +69,61 @@ use Catmandu::Hits;
 use Catmandu::Store::FedoraCommons::FOXML;
 use Moo;
 use Clone qw(clone);
+use Catmandu::Util qw(:is);
 
 with 'Catmandu::Bag';
+
+has _namespace_prefix => (
+    is => 'ro',
+    init_arg => undef,
+    lazy => 1,
+    builder => '_build_namespace_prefix'
+);
+has _namespace_prefix_re => (
+    is => 'ro', 
+    init_arg => undef,
+    lazy => 1, 
+    builder => '_build_namespace_prefix_re'
+);
+sub _build_namespace_prefix {
+    my $self = $_[0];
+    my $name = $self->name();
+    my $pid_delimiter = $self->store->_pid_delimiter();
+    "${name}${pid_delimiter}";
+}
+sub _build_namespace_prefix_re {
+    my $self = $_[0];
+    my $p = $self->_namespace_prefix();
+    qr/$p/;
+}
+sub _id_valid {
+    my ($self,$id) = @_;
+    return ( index( $id, $self->_namespace_prefix() ) == 0 ) ? 1 : 0;
+}
+
+#add namespace to generated ID if it does not start with the namespace prefix
+before add => sub {
+    my ($self, $data) = @_;
+    unless( $self->_id_valid( $data->{_id} ) ) {
+        $data->{_id} = $self->_namespace_prefix().$data->{_id};
+    }
+};
+#make it impossible to find 'islandora:1' in bag 'archive.ugent.be'
+around 'get' => sub {
+    my($orig,$self,$id) = @_;
+
+    return undef unless $self->_id_valid( $id );
+
+    $orig->($self,$id);
+};
+#make it impossible to delete 'islandora:1' when using bag 'archive.ugent.be'
+around 'delete' => sub {
+    my($orig,$self,$id) = @_;
+
+    return undef unless $self->_id_valid( $id );
+
+    $orig->($self,$id);
+};
 
 sub _get_model {
     my ($self, $obj) = @_;
@@ -72,8 +163,14 @@ sub _ingest_model {
     }
     
     my $xml = $serializer->serialize($data);
+ 
+    my %args = (
+        pid => $data->{_id} ,
+        xml => $xml ,
+        format => 'info:fedora/fedora-system:FOXML-1.1'
+    );
     
-    my $result = $self->store->fedora->ingest( pid => 'new' , xml => $xml , format => 'info:fedora/fedora-system:FOXML-1.1');
+    my $result = $self->store->fedora->ingest(%args);
     
     return undef unless $result->is_ok;
     
@@ -88,10 +185,11 @@ sub generator {
     
     sub {
         state $hits;
-        state $row; 
+        state $row;
+        state $ns_prefix = $self->_namespace_prefix;
         
         if( ! defined $hits) {
-            my $res = $fedora->findObjects(terms=>'*');
+            my $res = $fedora->findObjects( query => "pid~${ns_prefix}*" );
             unless ($res->is_ok) {
                 warn $res->error;
                 return undef;
@@ -99,7 +197,6 @@ sub generator {
             $row  = 0;
             $hits = $res->parse_content;
         }
-        
         if ($row + 1 == @{ $hits->{results} } && defined $hits->{token}) {
             my $result = $hits->{results}->[ $row ];
             
@@ -125,9 +222,9 @@ sub generator {
 sub add {
     my ($self,$data) = @_;    
     
-    if (defined $self->get($data->{_id})) {
+    if ( defined $self->get($data->{_id}) ) {
         my $ok = $self->_update_model($data);
-        
+
         die "failed to update" unless $ok;
     }
     else {
@@ -147,7 +244,7 @@ sub get {
 sub delete {
     my ($self, $id) = @_;
     
-    return undef if (!defined $id || $id =~ /^fedora-system:/) ;
+    return undef unless defined $id;
     
     my $fedora = $self->store->fedora;
     
@@ -162,11 +259,9 @@ sub delete_all {
         my $obj = $_[0];
         my $pid = $obj->{_id};
         
-        return if $pid =~ /^fedora-system:/;
-        
         my $ret = $self->delete($pid);
         
-        $count += 1 if $ret->is_ok;
+        $count += 1 if $ret;
     });
     
     $count;
@@ -219,8 +314,9 @@ Catmandu::Store::FedoraCommons - A Catmandu::Store plugin for the Fedora Commons
 
 A Catmandu::Store::FedoraCommons is a Perl package that can store data into
 FedoraCommons backed databases. The database as a whole is called a 'store'.
-Databases also have compartments (e.g. tables) called Catmandu::Bag-s. In 
-the current version we support only one default bag.
+Databases also have compartments (e.g. tables) called Catmandu::Bag-s.
+In Fedora we have namespaces. A bag corresponds to a namespace.
+The default bag corresponds to the default namespace in Fedora.
 
 By default Catmandu::Store::FedoraCommons works with a Dublin Core data model.
 You can use the add,get and delete methods of the store to retrieve and insert Perl HASH-es that
@@ -234,9 +330,11 @@ a model package that implements a 'get' and 'update' method.
 Create a new Catmandu::Store::FedoraCommons store at $fedora_baseurl. Optionally provide a name of
 a $model to serialize your Perl hashes into a Fedora Commons model.
 
-=head2 bag
+=head2 bag('$namespace')
 
-Create or retieve a bag. Returns a Catmandu::Bag.
+Create or retrieve a bag. Returns a Catmandu::Bag.
+Use this for storing or retrieving records from a
+fedora namespace.
 
 =head2 fedora
 
