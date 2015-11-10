@@ -71,7 +71,6 @@ use Moo;
 use Clone qw(clone);
 use Catmandu::Util qw(:is);
 
-with 'Catmandu::Bag';
 
 has _namespace_prefix => (
     is => 'ro',
@@ -266,6 +265,8 @@ sub delete_all {
     
     $count;
 }
+
+with 'Catmandu::Bag';
 
 1;
 
