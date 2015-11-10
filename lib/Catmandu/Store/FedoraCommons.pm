@@ -65,10 +65,8 @@ sub _build_pid_delimiter {
 package Catmandu::Store::FedoraCommons::Bag;
 
 use Catmandu::Sane;
-use Catmandu::Hits;
 use Catmandu::Store::FedoraCommons::FOXML;
 use Moo;
-use Clone qw(clone);
 use Catmandu::Util qw(:is);
 
 
