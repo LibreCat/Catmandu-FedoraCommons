@@ -8,21 +8,27 @@ Catmandu::FedoraCommons::Model::describeRepository - Perl model for the Fedora '
 
   my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
 
-  my $obj = $fedora->getObjectProfile(pid => 'demo:29')->parse_content;
+  my $obj = $fedora->describeRepository()->parse_content;
 
   {
-    'pid'     => 'demo:29' ,
-    'objLabel'       => 'Data Object for Image Manipulation Demo' ,
-    'objOwnerId'     => 'fedoraAdmin' ,
-    'objCreateDate'  => '2008-07-02T05:09:42.015Z' ,
-    'objLastModDate' => '2013-02-07T19:57:27.140Z' ,
-    'objDissIndexViewURL' => 'http://localhost:8080/fedora/objects/demo%3A29/methods/fedora-system%3A3/viewMethodIndex' ,
-    'objItemIndexViewURL' => 'http://localhost:8080/fedora/objects/demo%3A29/methods/fedora-system%3A3/viewItemIndex' ,
-    'objState'       => 'I' ,
-    'objModels'      => [
-        'info:fedora/fedora-system:FedoraObject-3.0' ,
-        'info:fedora/demo:UVA_STD_IMAGE' ,
-    ],
+    "sampleOAI-URL" : "http://localhost:8080/fedora/oai?verb=Identify",
+    "repositoryName" : "Fedora Repository",
+    "repositoryOAI-identifier" : {
+      "OAI-delimiter" : ":",
+      "OAI-namespaceIdentifier" : "localhost",
+      "OAI-sample" : "oai:localhost:islandora:100"
+    },
+    "repositoryBaseURL" : "http://localhost:8080/fedora",
+    "sampleAccess-URL" : "http://localhost:8080/fedora/objects/demo:5",
+    "adminEmail" : "libservice@ugent.be",
+    "repositoryVersion" : "3.7.1",
+    "repositoryPID" : {
+      "PID-sample" : "islandora:100",
+      "PID-delimiter" : ":",
+      "PID-namespaceIdentifier" : "islandora",
+      "retainPID" : "*"
+    },
+    "sampleSearch-URL" : "http://localhost:8080/fedora/objects"
   }
 
 =head1 SEE ALSO
