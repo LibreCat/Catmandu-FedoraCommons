@@ -50,7 +50,7 @@ sub parse {
     my $dom  = XML::LibXML->load_xml(string => $xml);
     $dom->getDocumentElement()->setNamespace('http://www.fedora.info/definitions/1/0/types/','t');
 
-    my $result = {};
+    my $result = { results => [] };
 
     my @nodes;
     

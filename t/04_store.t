@@ -19,13 +19,13 @@ SKIP: {
      ok($x->fedora, 'fedora');
      
      my $count = 0;
-     $x->bag->take(10)->each(sub { 
+     $x->bag('demo')->take(10)->each(sub { 
          my $obj = $_[0];
          $count++;
          ok($obj,"take(10) - $count");
      });
      
-     ok($obj = $x->bag->add({ title => ['test']}), 'add');
+     ok($obj = $x->bag('demo')->add({ title => ['test']}), 'add');
      
      my $pid = $obj->{_id};
      
@@ -35,13 +35,13 @@ SKIP: {
      
      $obj->{creator}->[0] = 'Patrick';
      
-     ok($x->bag->add($obj),'update using add');
+     ok($x->bag('demo')->add($obj),'update using add');
      
-     ok($x->bag->get($pid), 'get');
+     ok($x->bag('demo')->get($pid), 'get');
      
      is($obj->{creator}->[0] , 'Patrick' , 'obj content ok');
      
-     ok($x->bag->delete($pid), "delete $pid");
+     ok($x->bag('demo')->delete($pid), "delete $pid");
      
      #print Dumper($x->bag->delete_all());
 }

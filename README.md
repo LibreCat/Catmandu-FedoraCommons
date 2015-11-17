@@ -205,6 +205,15 @@ model.
           }
      }
 
+## describeRepository
+
+This method returns information about the fedora repository. No arguments required.
+This method returns a [Catmandu::FedoraCommons::Response](https://metacpan.org/pod/Catmandu::FedoraCommons::Response) object with a [Catmandu::FedoraCommons::Model::describeRepository](https://metacpan.org/pod/Catmandu::FedoraCommons::Model::describeRepository) model.
+
+    Example:
+
+    my $desc = $fedora->describeRepository()->parse_content();
+
 # MODIFY METHODS
 
 ## addDatastream(pid => $pid , dsID => $dsID, url => $remote\_location, %args)
@@ -457,7 +466,7 @@ This method returns a [Catmandu::FedoraCommons::Response](https://metacpan.org/p
 [Catmandu::FedoraCommons::Response](https://metacpan.org/pod/Catmandu::FedoraCommons::Response),
 [Catmandu::Model::findObjects](https://metacpan.org/pod/Catmandu::Model::findObjects),
 [Catmandu::Model::getObjectHistory](https://metacpan.org/pod/Catmandu::Model::getObjectHistory),
-[Catmandu::Model::getObjectPrifule](https://metacpan.org/pod/Catmandu::Model::getObjectPrifule),
+[Catmandu::Model::getObjectProfile](https://metacpan.org/pod/Catmandu::Model::getObjectProfile),
 [Catmandu::Model::listDatastreams](https://metacpan.org/pod/Catmandu::Model::listDatastreams),
 [Catmandu::Model::listMethods](https://metacpan.org/pod/Catmandu::Model::listMethods)
 
