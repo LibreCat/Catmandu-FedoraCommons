@@ -71,6 +71,7 @@
    },
    "version" : "0.272",
    "x_contributors" : [
+      "njfranck <njfranck@ca20c521.ugent.be>",
       "Patrick Hochstenbach <patrick.hochstenbach@ugent.be>"
    ]
 }

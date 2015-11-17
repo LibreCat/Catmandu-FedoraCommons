@@ -1,7 +1,11 @@
 Revision history for Catmandu-OAI
 
 {{$NEXT}}
-
+  - Adding describeRepository command
+  - Adding support for reading and adding to the Fedora default namespace
+  - Adding support to switch namespaces using the bag('name') 
+  - Listing all objects is only within one namespace
+  
 0.272  2015-05-21 09:49:18 CEST
   - Upgrade to Dist::Milla
   - Upgrade to latest Catmandu
