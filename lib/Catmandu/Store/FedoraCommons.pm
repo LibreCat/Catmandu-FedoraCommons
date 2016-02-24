@@ -30,15 +30,15 @@ has _default_namespace => (
     builder => '_build_default_namespace'
 );
 has _pid_delimiter => (
-    is => 'ro', 
+    is => 'ro',
     init_arg => undef,
-    lazy => 1, 
+    lazy => 1,
     builder => '_build_pid_delimiter'
 );
 
 sub _build_fedora {
     my $self = $_[0];
-    
+
     Catmandu::FedoraCommons->new($self->baseurl, $self->username, $self->password);
 }
 #namespace corresponds to name of bag
@@ -77,9 +77,9 @@ has _namespace_prefix => (
     builder => '_build_namespace_prefix'
 );
 has _namespace_prefix_re => (
-    is => 'ro', 
+    is => 'ro',
     init_arg => undef,
-    lazy => 1, 
+    lazy => 1,
     builder => '_build_namespace_prefix_re'
 );
 sub _build_namespace_prefix {

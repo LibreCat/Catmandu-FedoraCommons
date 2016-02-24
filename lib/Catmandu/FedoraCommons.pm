@@ -72,7 +72,6 @@ use MIME::Base64;
 use strict;
 use Carp;
 use Data::Validate::URI qw(is_uri);
-use Data::Dumper;
 
 =head2 new($base_url,$username,$password)
 
@@ -190,6 +189,7 @@ sub _PUT {
             open(my $fh,'<',$file) or Carp::croak "can't open $file : $!";
             local($/) = undef;
             $req->content(scalar(<$fh>));
+            $req->header( 'Content-Length' => -s $file );
             close($fh);
         }
         else {
