@@ -2,6 +2,9 @@ Revision history for Catmandu-OAI
 
 {{$NEXT}}
 
+0.274  2016-02-24 15:44:52 CET
+  - Fixing code fo Catmandu 1.0 release
+  
 0.273  2015-11-17 14:42:02 CET
   - Adding describeRepository command
   - Adding support for reading and adding to the Fedora default namespace
