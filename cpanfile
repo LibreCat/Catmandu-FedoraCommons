@@ -7,7 +7,7 @@ on 'test', sub {
   requires 'Test::Pod','1.49';
 };
 
-requires 'Catmandu', '0.9301';
+requires 'Catmandu', '1.06';
 requires 'Data::Validate::URI', '0.06';
 requires 'Data::Validate::Type', '1.5.1';
 requires 'HTTP::Request::Common', '6.04';

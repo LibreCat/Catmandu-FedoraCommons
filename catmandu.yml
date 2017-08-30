@@ -6,3 +6,10 @@ store:
      baseurl: http://localhost:8080/fedora
      username: fedoraAdmin
      password: fedoraAdmin
+ files:
+   package: File::FedoraCommons
+   options:
+     baseurl: http://localhost:8080/fedora
+     username: fedoraAdmin
+     password: fedoraAdmin
+     purge: 1
