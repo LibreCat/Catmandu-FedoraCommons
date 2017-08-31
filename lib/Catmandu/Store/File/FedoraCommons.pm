@@ -23,7 +23,9 @@ has dsnamespace => (is => 'ro', default => sub {'DS'});
 has md5enabled  => (is => 'ro', default => sub {'1'});
 has versionable => (is => 'ro', default => sub {'0'});
 has purge       => (is => 'ro', default => sub {'0'});
+has model       => (is => 'ro', predicate => 1 );
 has fedora      => (is => 'lazy');
+
 
 sub _build_fedora {
     my ($self) = @_;
@@ -34,6 +36,21 @@ sub _build_fedora {
     $fedora->{md5enabled}  = $self->md5enabled;
     $fedora->{versionable} = $self->versionable;
     $fedora->{purge}       = $self->purge;
+
+    my $model = $self->model;
+
+    unless (Catmandu::Util::is_invocant($model) || Catmandu::Util::is_code_ref($model)) {
+        my $class = $model =~ /^\+(.+)/ ? $1
+          : "Catmandu::Store::FedoraCommons::$model";
+
+        eval {
+            $self->{model} = Catmandu::Util::require_package($class)->new(fedora => $fedora);
+        };
+        if ($@) {
+          croak $@;
+        }
+    }
+
     $fedora;
 }
 
@@ -68,6 +85,7 @@ Catmandu::Store::File::FedoraCommons - A Catmandu::FileStore to store files on d
          username: fedoraAdmin
          password: fedoraAdmin
          namespace: demo
+         model: DC
          purge: 1
 
     # Export a list of all file containers
@@ -167,6 +185,57 @@ Make data streams in Fedora versionable. Default: 0
 When purge is active, deletion of datastreams and records will purge the
 content in FedoraCommons. Otherwise it will set the status to 'D' (deleted).
 Default: 0
+
+=item model
+
+When a model is set, then descriptive metadata can be added to the File::Store
+folders. Only one type of model is currenty available 'DC'.
+
+Examples:
+
+    $ cat record.yml
+    ---
+    _id: 1234
+    title:
+      - My title
+    creator:
+      - John Brown
+      - Max Musterman
+    description:
+      - Files and more things
+    ...
+    $ catmandu import YAML to files < record.yml
+    $ catmandu export files to YAML --id 1234
+    ---
+    _id: 1234
+    title:
+      - My title
+    creator:
+      - John Brown
+      - Max Musterman
+    description:
+      - Files and more things
+    ...
+    $ catmandu stream foobar.pdf to files --bag 1234 --id foobar.pdf
+    $ catmandu export files --bag 1234
+    ---
+    _id: foobar.pdf
+    _stream: !!perl/code '{ "DUMMY" }'
+    content_type: application/pdf
+    control_group: M
+    created: '1504170797'
+    format_uri: ''
+    info_type: ''
+    location: demo:1234+DS.0+DS.0.0
+    locationType: INTERNAL_ID
+    md5: 6112b4f1b1a439917b8bbacc93b7d3fa
+    modified: '1504170797'
+    size: '534'
+    state: A
+    version_id: DS.0.0
+    versionable: 'false'
+    ...
+    $ catmandu stream files --bag 1234 --id foobar.pdf > foobar.pdf
 
 =back
 

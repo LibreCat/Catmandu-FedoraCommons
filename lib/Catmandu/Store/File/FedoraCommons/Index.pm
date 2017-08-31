@@ -5,6 +5,7 @@ our $VERSION = '1.0602';
 use Catmandu::Sane;
 use Moo;
 use Carp;
+use Clone qw(clone);
 use Catmandu::Store::FedoraCommons::FOXML;
 use namespace::clean;
 
@@ -53,7 +54,7 @@ sub generator {
 
             $pid =~ s{^$ns_prefix:}{};
 
-            return +{_id => $pid,};
+            return $self->get($pid);
         }
         else {
             my $result = $hits->{results}->[$row++];
@@ -64,7 +65,7 @@ sub generator {
 
             $pid =~ s{^$ns_prefix:}{};
 
-            return +{_id => $pid,};
+            return $self->get($pid);
         }
     };
 }
@@ -73,6 +74,7 @@ sub exists {
     my ($self, $key) = @_;
 
     my $fedora    = $self->store->fedora;
+
     my $ns_prefix = $fedora->{namespace};
 
     croak "Need a key" unless defined $key;
@@ -89,30 +91,46 @@ sub add {
 
     croak "Need an id" unless defined $data && exists $data->{_id};
 
-    my $key = $data->{_id};
-
-    $self->log->debug("Creating container for $key");
-
     my $fedora    = $self->store->fedora;
     my $ns_prefix = $fedora->{namespace};
+    my $key = $data->{_id};
 
-    my $xml = Catmandu::Store::FedoraCommons::FOXML->new->serialize();
+    if ($self->exists($key)) {
+        $self->log->debug("Updating container for $key");
 
-    $self->log->debug("Ingest object $ns_prefix:$key");
-
-    my $response = $fedora->ingest(
-        pid    => "$ns_prefix:$key",
-        xml    => $xml,
-        format => 'info:fedora/fedora-system:FOXML-1.1'
-    );
-
-    unless ($response->is_ok) {
-        $self->log->error("Failed ingest object $ns_prefix:$key");
-        $self->log->error($response->error);
-        return undef;
+        if ($self->store->has_model) {
+            my $model_data = clone($data);
+            delete $model_data->{_stream};
+            $model_data->{_id} = "$ns_prefix:$key";
+            $self->store->model->update($model_data);
+        }
     }
+    else {
+        $self->log->debug("Creating container for $key");
 
-    my $obj = $response->parse_content;
+        my $xml = Catmandu::Store::FedoraCommons::FOXML->new->serialize();
+
+        $self->log->debug("Ingest object $ns_prefix:$key");
+
+        my $response = $fedora->ingest(
+            pid    => "$ns_prefix:$key",
+            xml    => $xml,
+            format => 'info:fedora/fedora-system:FOXML-1.1'
+        );
+
+        unless ($response->is_ok) {
+            $self->log->error("Failed ingest object $ns_prefix:$key");
+            $self->log->error($response->error);
+            return undef;
+        }
+
+        if ($self->store->has_model) {
+            my $model_data = clone($data);
+            delete $model_data->{_stream};
+            $model_data->{_id} = "$ns_prefix:$key";
+            $self->store->model->update($model_data);
+        }
+    }
 
     return $self->get($key);
 }
@@ -136,7 +154,15 @@ sub get {
         return undef;
     }
 
-    return +{_id => $key,};
+    if ($self->store->has_model) {
+        my $item = $self->store->model->get("$ns_prefix:$key");
+        my $id   = $item->{_id};
+        $item->{_id} = substr($id,length($ns_prefix)+1);
+        return $item;
+    }
+    else {
+        return +{_id => $key};
+    }
 }
 
 sub delete {
