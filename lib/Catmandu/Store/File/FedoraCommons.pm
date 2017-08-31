@@ -1,6 +1,6 @@
 package Catmandu::Store::File::FedoraCommons;
 
-our $VERSION = '0.274';
+our $VERSION = '0.3';
 
 use Catmandu::Sane;
 use Moo;
