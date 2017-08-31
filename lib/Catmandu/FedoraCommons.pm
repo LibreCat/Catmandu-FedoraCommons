@@ -4,26 +4,26 @@ Catmandu::FedoraCommons - Low level Catmandu interface to the Fedora Commons RES
 
 =head1 SYNOPSIS
 
-  # Use the command line tools 
+  # Use the command line tools
   $ fedora_admin.pl
 
   # Or the low-level API-s
   use Catmandu::FedoraCommons;
-  
+
   my $fedora = Catmandu::FedoraCommons->new('http://localhost:8080/fedora','fedoraAdmin','fedoraAdmin');
-  
+
   my $result = $fedora->findObjects(terms=>'*');
-  
+
   die $result->error unless $result->is_ok;
-  
+
   my $hits = $result->parse_content();
-  
+
   for my $hit (@{ $hits->{results} }) {
        printf "%s\n" , $hit->{pid};
   }
-  
+
   # Or using the higher level Catmandu::Store codes you can do things like
-  
+
   use Catmandu::Store::FedoraCommons;
 
   my $store = Catmandu::Store::FedoraCommons->new(
@@ -32,30 +32,30 @@ Catmandu::FedoraCommons - Low level Catmandu interface to the Fedora Commons RES
            password => 'fedoraAdmin',
            model    => 'Catmandu::Store::FedoraCommons::DC' # default
    );
-   
+
   $store->bag->each(sub {
         my $model = shift;
         printf "title: %s\n" , join("" , @{ $model->{title} });
         printf "creator: %s\n" , join("" , @{ $model->{creator} });
-        
+
         my $pid = $model->{_id};
         my $ds  = $store->fedora->listDatastreams(pid => $pid)->parse_content;
   });
-   
-  my $obj = $store->bag->add({ 
-        title => ['The Master and Margarita'] , 
+
+  my $obj = $store->bag->add({
+        title => ['The Master and Margarita'] ,
         creator => ['Bulgakov, Mikhail'] }
   );
-  
+
   $store->fedora->addDatastream(pid => $obj->{_id} , url => "http://myurl/rabbit.jpg");
-  
+
   # Add your own perl version of a descriptive metadata model by implementing your own
   # model that can do a serialize and deserialize.
-  
+
 =head1 DESCRIPTION
 
-Catmandu::FedoraCommons is an Perl API to the Fedora Commons REST API (http://www.fedora.info/). 
-Supported versions are Fedora Commons 3.6 or better. 
+Catmandu::FedoraCommons is an Perl API to the Fedora Commons REST API (http://www.fedora.info/).
+Supported versions are Fedora Commons 3.6 or better.
 
 =head1 ACCESS METHODS
 
@@ -65,6 +65,7 @@ package Catmandu::FedoraCommons;
 use Catmandu::FedoraCommons::Response;
 
 our $VERSION = '0.274';
+use v5.14;
 use URI::Escape;
 use HTTP::Request::Common qw(GET POST DELETE PUT HEAD);
 use LWP::UserAgent;
@@ -80,16 +81,16 @@ Create a new Catmandu::FedoraCommons connecting to the baseurl of the Fedora Com
 =cut
 sub new {
     my ($class,$baseurl,$username,$password) = @_;
-    
+
     Carp::croak "baseurl missing" unless defined $baseurl;
-    
+
     my $ua = LWP::UserAgent->new(
                    agent   => 'Catmandu-FedoraCommons/' . $VERSION,
                    timeout => 180,
                );
-    
+
     $baseurl =~ m/(\w+):\/\/([^\/:]+)(:(\d+))?(\S+)/;
-              
+
     bless { baseurl  => $baseurl,
             scheme   => $1,
             host     => $2,
@@ -103,7 +104,7 @@ sub new {
 sub _GET {
     my ($self,$path,$data,$callback,$headers) = @_;
     $headers = {} unless $headers;
-        
+
     my @parts;
     for my $part (@$data) {
         my ($key) = keys %$part;
@@ -111,13 +112,13 @@ sub _GET {
         my $value = uri_escape($part->{$key}) || "";
         push @parts , "$name=$value";
     }
-    
+
     my $query = join("&",@parts);
-   
+
     my $req = GET $self->{baseurl} . $path . '?' . $query ,  %$headers;
-    
+
     $req->authorization_basic($self->{username}, $self->{password});
-    
+
     defined $callback ?
         return $self->{ua}->request($req, $callback, 4096) :
         return $self->{ua}->request($req);
@@ -125,13 +126,13 @@ sub _GET {
 
 sub _POST {
     my ($self,$path,$data,$callback) = @_;
-        
+
     my $content = undef;
     my @parts;
-    
+
     for my $part (@$data) {
         my ($key) = keys %$part;
-        
+
         if (ref $part->{$key} eq 'ARRAY') {
             $content = [ $key => $part->{$key} ];
         }
@@ -141,11 +142,11 @@ sub _POST {
             push @parts , "$name=$value";
         }
     }
-    
+
     my $query = join("&",@parts);
-   
+
     my $req;
-    
+
     if (defined $content) {
         $req = POST $self->{baseurl} . $path . '?' . $query, Content_Type => 'form-data' , Content => $content;
     }
@@ -153,7 +154,7 @@ sub _POST {
         # Need a Content_Type text/xml because of a Fedora 'ingest' feature that requires it...
         $req = POST $self->{baseurl} . $path . '?' . $query, Content_Type => 'text/xml';
     }
-    
+
     $req->authorization_basic($self->{username}, $self->{password});
 
     defined $callback ?
@@ -166,10 +167,10 @@ sub _PUT {
 
     my $content = undef;
     my @parts;
-    
+
     for my $part (@$data) {
         my ($key) = keys %$part;
-        
+
         if (ref $part->{$key} eq 'ARRAY') {
             $content = $part->{$key};
         }
@@ -177,11 +178,11 @@ sub _PUT {
             push @parts , uri_escape($key) . "=" . uri_escape($part->{$key});
         }
     }
-    
+
     my $query = join("&",@parts);
-   
+
     my $req;
-    
+
     if (defined $content) {
         if (@$content == 1) {
             my $file = $content->[0];
@@ -205,7 +206,7 @@ sub _PUT {
     }
 
     $req->authorization_basic($self->{username}, $self->{password});
-    
+
     defined $callback ?
         return $self->{ua}->request($req, $callback, 4096) :
         return $self->{ua}->request($req);
@@ -213,7 +214,7 @@ sub _PUT {
 
 sub _DELETE {
     my ($self,$path,$data,$callback) = @_;
-    
+
     my @parts;
     for my $part (@$data) {
         my ($key) = keys %$part;
@@ -221,11 +222,11 @@ sub _DELETE {
         my $value = uri_escape($part->{$key}) || "";
         push @parts , "$name=$value";
     }
-    
+
     my $query = join("&",@parts);
-   
+
     my $req = DELETE sprintf("%s%s%s", $self->{baseurl} , $path , $query ? '?' . $query : "");
-    
+
     $req->authorization_basic($self->{username}, $self->{password});
 
     defined $callback ?
@@ -237,50 +238,50 @@ sub _DELETE {
 
 =head2 findObjects(terms => $terms , maxResults => $maxResults)
 
-Execute a search query on the Fedora Commons server. One of 'query' or 'terms' is required. Query 
+Execute a search query on the Fedora Commons server. One of 'query' or 'terms' is required. Query
 contains a phrase optionally including '*' and '?' wildcards. Terms contain one or more conditions separated by space.
-A condition is a field followed by an operator, followed by a value. The = operator will match if the field's 
-entire value matches the value given. The ~ operator will match on phrases within fields, and accepts 
+A condition is a field followed by an operator, followed by a value. The = operator will match if the field's
+entire value matches the value given. The ~ operator will match on phrases within fields, and accepts
 the ? and * wildcards. The <, >, <=, and >= operators can be used with numeric values, such as dates.
 
 Examples:
 
   query => "*o*"
-  
+
   query => "?edora"
-  
+
   terms => "pid~demo:* description~fedora"
 
   terms => "cDate>=1976-03-04 creator~*n*"
 
   terms => "mDate>2002-10-2 mDate<2002-10-2T12:00:00"
-  
+
 Optionally a maxResults parameter may be specified limiting the number of search results (default is 20). This method
 returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::findObjects> model.
 
 =cut
 sub findObjects {
     my $self = shift;
-    my %args = (query => "", terms => "", maxResults => 20, @_);      
-    
+    my %args = (query => "", terms => "", maxResults => 20, @_);
+
     Carp::croak "terms or query required" unless defined $args{terms} || defined $args{query};
-               
-    my %defaults = (pid => 'true' , label => 'true' , state => 'true' , ownerId => 'true' ,	
-                    cDate => 'true' , mDate => 'true' , dcmDate => 'true' , title => 'true' , 	
-                    creator => 'true' , subject => 'true' , description => 'true' , publisher => 'true' ,	
-                    contributor => 'true' , date => 'true' , type => 'true' , format => 'true' ,	
-                    identifier => 'true' , source => 'true' , language => 'true' , relation => 'true' , 	
+
+    my %defaults = (pid => 'true' , label => 'true' , state => 'true' , ownerId => 'true' ,
+                    cDate => 'true' , mDate => 'true' , dcmDate => 'true' , title => 'true' ,
+                    creator => 'true' , subject => 'true' , description => 'true' , publisher => 'true' ,
+                    contributor => 'true' , date => 'true' , type => 'true' , format => 'true' ,
+                    identifier => 'true' , source => 'true' , language => 'true' , relation => 'true' ,
                     coverage => 'true' , rights => 'true' , resultFormat => 'xml');
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
-    return Catmandu::FedoraCommons::Response->factory( 
-            'findObjects' , $self->_GET('/objects',$form_data) 
+
+    return Catmandu::FedoraCommons::Response->factory(
+            'findObjects' , $self->_GET('/objects',$form_data)
            );
 }
 
@@ -296,39 +297,39 @@ Example:
     die $result->error unless $result->is_ok;
 
     my $hits = $result->parse_content();
-    
+
     for my $hit (@{ $hits->{results} }) {
            printf "%s\n" , $hit->{pid};
     }
-    
+
     my $result = $fedora->resumeFindObjects(sessionToken => $hits->{token});
-    
+
     my $hits = $result->parse_content();
-    
+
     ...
-    
+
 =cut
 sub resumeFindObjects {
     my $self = shift;
-    my %args = (sessionToken => undef , query => "", terms => "", maxResults => 20, @_);      
-    
+    my %args = (sessionToken => undef , query => "", terms => "", maxResults => 20, @_);
+
     Carp::croak "sessionToken required" unless defined $args{sessionToken};
     Carp::croak "terms or query required" unless defined $args{terms} || defined $args{query};
-               
-    my %defaults = (pid => 'true' , label => 'true' , state => 'true' , ownerId => 'true' ,	
-                    cDate => 'true' , mDate => 'true' , dcmDate => 'true' , title => 'true' , 	
-                    creator => 'true' , subject => 'true' , description => 'true' , publisher => 'true' ,	
-                    contributor => 'true' , date => 'true' , type => 'true' , format => 'true' ,	
-                    identifier => 'true' , source => 'true' , language => 'true' , relation => 'true' , 	
+
+    my %defaults = (pid => 'true' , label => 'true' , state => 'true' , ownerId => 'true' ,
+                    cDate => 'true' , mDate => 'true' , dcmDate => 'true' , title => 'true' ,
+                    creator => 'true' , subject => 'true' , description => 'true' , publisher => 'true' ,
+                    contributor => 'true' , date => 'true' , type => 'true' , format => 'true' ,
+                    identifier => 'true' , source => 'true' , language => 'true' , relation => 'true' ,
                     coverage => 'true' , rights => 'true' , resultFormat => 'xml');
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'resumeFindObjects' , $self->_GET('/objects',$form_data)
             );
@@ -344,36 +345,36 @@ model.
 To stream the contents of the datastream a callback function can be provided.
 
 Example:
-    
+
     $fedora->getDatastreamDissemination(pid => 'demo:5', dsID => 'VERYHIGHRES', callback => \&process);
-    
+
     sub process {
         my ($data, $response, $protocol) = @_;
         print $data;
     }
-    
+
 =cut
 sub getDatastreamDissemination {
     my $self = shift;
     my %args = (pid => undef , dsID => undef , asOfDateTime => undef, download => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
-    
+
     my $pid  = $args{pid};
     my $dsId = $args{dsID};
     my $callback = $args{callback};
-    
+
     delete $args{pid};
     delete $args{dsID};
     delete $args{callback};
-    
+
     my $form_data = [];
-                   
+
     for my $name (keys %args) {
         push @$form_data , { $name => $args{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'getDatastreamDissemination' , $self->_GET('/objects/' . $pid . '/datastreams/' . $dsId . '/content' , $form_data, $callback)
            );
@@ -386,35 +387,35 @@ further method parameters can be provided and a callback function to stream the 
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getDatastreamDissemination> model.
 
   Example:
-  
+
   $fedora->getDissemination(pid => 'demo:29', sdefPid => 'demo:27' , method => 'resizeImage' , width => 100, callback => \&process);
-  
+
 =cut
 sub getDissemination {
     my $self = shift;
     my %args = (pid => undef , sdefPid => undef , method => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{sdefPid};
     Carp::croak "need method" unless $args{method};
-    
+
     my $pid      = $args{pid};
     my $sdefPid  = $args{sdefPid};
     my $method   = $args{method};
     my $callback = $args{callback};
-    
+
     delete $args{pid};
     delete $args{sdefPid};
     delete $args{method};
     delete $args{callback};
-    
+
     my $form_data = [];
-                   
+
     for my $name (keys %args) {
         push @$form_data , { $name => $args{$name} };
     }
-    
-    return Catmandu::FedoraCommons::Response->factory( 
+
+    return Catmandu::FedoraCommons::Response->factory(
             'getDissemination' , $self->_GET('/objects/' . $pid . '/methods/' . $sdefPid . '/' . $method , $form_data, $callback)
            );
 }
@@ -425,34 +426,34 @@ This method returns the version history of an object. Required is the object $pi
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getObjectHistory> model.
 
  Example:
- 
+
  my $obj = $fedora->getObjectHistory(pid => 'demo:29')->parse_content;
- 
+
  for @{$obj->{objectChangeDate}} {}
     print "$_\n;
  }
- 
+
 =cut
 sub getObjectHistory {
     my $self = shift;
     my %args = (pid => undef , @_);
 
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid     = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ( format => 'xml' );
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-     
-    return Catmandu::FedoraCommons::Response->factory( 
+
+    return Catmandu::FedoraCommons::Response->factory(
             'getObjectHistory' , $self->_GET('/objects/' . $pid . '/versions', $form_data)
             );
 }
@@ -468,27 +469,27 @@ with a L<Catmandu::FedoraCommons::Model::getObjectProfile> model.
    my $obj = $fedora->getObjectProfile(pid => 'demo:29')->parse_content;
 
    printf "Label: %s\n" , $obj->{objLabel};
-  
+
 =cut
 sub getObjectProfile {
     my $self = shift;
     my %args = (pid => undef , asOfDateTime => undef , @_);
 
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid     = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ( format => 'xml' );
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-     
+
     return Catmandu::FedoraCommons::Response->factory(
             'getObjectProfile' , $self->_GET('/objects/' . $pid , $form_data)
            );
@@ -501,36 +502,36 @@ Optionally a version date asOfDateTime can be provided. This method returns a L<
 with a L<Catmandu::FedoraCommons::Model::listDatastreams> model.
 
   Example:
-  
+
   my $obj = $fedora->listDatastreams(pid => 'demo:29')->parse_content;
-  
+
   for (@{ $obj->{datastream}} ) {
      printf "Label: %s\n" , $_->{label};
   }
-  
+
 =cut
 sub listDatastreams {
     my $self = shift;
     my %args = (pid => undef , asOfDateTime => undef , @_);
 
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid     = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ( format => 'xml' );
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-     
+
     return Catmandu::FedoraCommons::Response->factory(
             'listDatastreams' , $self->_GET('/objects/' . $pid . '/datastreams', $form_data)
-           );    
+           );
 }
 
 =head2 listMethods(pid => $pid , sdefPid => $sdefPid , asOfDateTime => $date)
@@ -541,12 +542,12 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
 model.
 
   Example:
-  
+
    my $obj = $fedora->listMethods(pid => 'demo:29')->parse_content;
-   
+
    for ( @{ $obj->{sDef} }) {
         printf "[%s]\n" , $_->{$pid};
-        
+
         for my $m ( @{ $_->{method} } ) {
             printf "\t%s\n" , $m->{name};
         }
@@ -558,22 +559,22 @@ sub listMethods {
     my %args = (pid => undef , sdefPid => undef, asOfDateTime => undef , @_);
 
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid     = $args{pid};
     my $sdefPid = $args{sdefPid};
-     
+
     delete $args{pid};
     delete $args{sdefPid};
-    
+
     my %defaults = ( format => 'xml' );
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-     
+
     return Catmandu::FedoraCommons::Response->factory(
             'listMethods' , $self->_GET('/objects/' . $pid . '/methods' . ( defined $sdefPid ? "/$sdefPid" : "" ), $form_data)
            );
@@ -615,34 +616,34 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
 model.
 
  Example:
- 
+
    my $obj = $fedora->addDatastream(pid => 'demo:29', dsID => 'TEST' , file => 'README', mimeType => 'text/plain')->parse_content;
-   
+
    print "Uploaded at: %s\n" , $obj->{dateTime};
-   
+
 =cut
 sub addDatastream {
     my $self = shift;
     my %args = (pid => undef , dsID => undef, url => undef , file => undef , xml => undef , @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
     Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file} || defined $args{xml};
-    
+
     my $pid  = $args{pid};
     my $dsID = $args{dsID};
     my $url  = $args{url};
     my $file = $args{file};
     my $xml  = $args{xml};
-     
+
     delete $args{pid};
     delete $args{dsID};
     delete $args{url};
     delete $args{file};
     delete $args{xml};
-    
+
     my %defaults = ( versionable => 'false');
-    
+
     if (defined $file) {
         $defaults{file} = ["$file"];
         $defaults{controlGroup} = 'M';
@@ -656,14 +657,14 @@ sub addDatastream {
         $defaults{dsLocation} = $url;
         $defaults{controlGroup} = 'M';
     }
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'addDatastream' , $self->_POST('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
            );
@@ -677,24 +678,24 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
 model.
 
   Example:
-  
+
   $fedora->addRelationship(pid => 'demo:29' , relation => [ 'info:fedora/demo:29' , 'http://my.org/name' , 'Peter']);
 
 =cut
 sub addRelationship {
     my $self = shift;
     my %args = (pid => undef , relation => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need relation" unless defined $args{relation} && ref $args{relation} eq 'ARRAY';
-    
+
     my $pid       = $args{pid};
     my $subject   = $args{relation}->[0];
     my $predicate = $args{relation}->[1];
     my $object    = $args{relation}->[2];
     my $dataType  = $args{dataType};
     my $isLiteral = is_uri($object) ? "false" : "true";
-    
+
     my $form_data = [
         { subject   => $subject },
         { predicate => $predicate },
@@ -717,36 +718,36 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
 model.
 
  Example:
- 
+
    my $res = $fedora->export(pid => 'demo:29');
-   
+
    print $res->raw;
-   
+
    print "%s\n" , $res->parse_content->{objectProperties}->{label};
 
 =cut
 sub export {
     my $self = shift;
     my %args = (pid => undef , format => undef , context => undef , encoding => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid     = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ();
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'export' , $self->_GET('/objects/' . $pid . '/export', $form_data)
-           );  
+           );
 }
 
 =head2 getDatastream(pid => $pid, dsID => $dsID , %args)
@@ -758,37 +759,37 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
 model.
 
   Example:
-  
+
   my $obj = $fedora->getDatastream(pid => 'demo:29', dsID => 'DC')->parse_content;
-  
+
   printf "Label: %s\n" , $obj->{profile}->{dsLabel};
- 
+
 =cut
 sub getDatastream {
     my $self = shift;
     my %args = (pid => undef , dsID => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
-    
+
     my $pid  = $args{pid};
     my $dsID = $args{dsID};
-     
+
     delete $args{pid};
     delete $args{dsID};
-    
+
     my %defaults = ( format => 'xml');
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'getDatastream' , $self->_GET('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
-           );  
+           );
 }
 
 =head2 getDatastreamHistory(pid => $pid , dsID => $dsID , %args)
@@ -798,9 +799,9 @@ data stream. This method returns a L<Catmandu::FedoraCommons::Response> object w
 model.
 
   Example:
-  
+
   my $obj = $fedora->getDatastreamHistory(pid => 'demo:29', dsID => 'DC')->parse_content;
-  
+
   for (@{ $obj->{profile} }) {
      printf "Version: %s\n" , $_->{dsCreateDate};
   }
@@ -809,28 +810,28 @@ model.
 sub getDatastreamHistory {
     my $self = shift;
     my %args = (pid => undef , dsID => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
-    
+
     my $pid  = $args{pid};
     my $dsID = $args{dsID};
-     
+
     delete $args{pid};
     delete $args{dsID};
-    
+
     my %defaults = ( format => 'xml');
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'getDatastreamHistory' , $self->_GET('/objects/' . $pid . '/datastreams/' . $dsID . '/history', $form_data)
-           );  
+           );
 }
 
 =head2 getNextPID(namespace => $namespace, numPIDs => $numPIDs)
@@ -839,26 +840,26 @@ This method generates a new pid. Optionally a 'namespace' can be provided and th
 L<Catmandu::FedoraCommons::Model::pidList> model.
 
     Example:
-    
+
     my $pid = $fedora->getNextPID()->parse_content->[0];
-    
+
 =cut
 sub getNextPID {
     my $self = shift;
     my %args = (namespace => undef, @_);
-    
+
     my %defaults = ( format => 'xml');
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'getNextPID' , $self->_POST('/objects/nextPID', $form_data)
-           ); 
+           );
 }
 
 =head2 getObjectXML(pid => $pid)
@@ -867,34 +868,34 @@ This method exports the data model of the object in FOXML format. Required is $p
 This method returns a L<Catmandu::FedoraCommons::Response> object .
 
  Example:
- 
+
    my $res = $fedora->getObjectXML(pid => 'demo:29');
-   
+
    print $res->raw;
-   
+
 =cut
 sub getObjectXML {
     my $self = shift;
     my %args = (pid => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid  = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ();
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'getObjectXML' , $self->_GET('/objects/' . $pid . '/objectXML', $form_data)
-           );  
+           );
 }
 
 =head2 getRelationships(pid => $pid [, relation => [$subject, $predicate, undef] , format => $format ])
@@ -905,40 +906,40 @@ See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getRelationships> model.
 
  Example:
- 
+
  my $obj = $fedora->getRelationships(pid => 'demo:29')->parse_content;
 
  my $iter = $obj->get_statements();
- 
+
  print "Names of things:\n";
  while (my $st = $iter->next) {
      my $s = $st->subject;
      my $name = $st->object;
      print "The name of $s is $name\n";
  }
- 
+
 =cut
 sub getRelationships {
     my $self = shift;
     my %args = (pid => undef , relation => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid       = $args{pid};
     my $format    = $args{format};
-    
+
     my ($subject,$predicate);
-    
+
     if (defined $args{relation} && ref $args{relation} eq 'ARRAY') {
         $subject   = $args{relation}->[0];
         $predicate = $args{relation}->[1];
     }
-    
+
     my %defaults = (subject => $subject, predicate => $predicate, format => 'xml');
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} } if defined $values{$name};
     }
@@ -960,27 +961,27 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
   Example:
 
   my $obj = $fedora->ingest(pid => 'new', file => 't/obj_demo_40.zip', format => 'info:fedora/fedora-system:ATOMZip-1.1')->parse_content;
-  
+
   printf "created: %s\n" , $obj->{pid};
-  
+
 =cut
 sub ingest {
     my $self = shift;
     my %args = (pid => undef , file => undef , xml => undef , @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need file or xml" unless defined $args{file} || defined $args{xml};
-    
+
     my $pid     = $args{pid};
     my $file    = $args{file};
     my $xml     = $args{xml};
-     
+
     delete $args{pid};
     delete $args{file};
     delete $args{xml};
 
     my %defaults = (ignoreMime => 'true');
-    
+
     if (defined $file) {
         $defaults{format}   = 'info:fedora/fedora-system:FOXML-1.1';
         $defaults{encoding} = 'UTF-8';
@@ -991,14 +992,14 @@ sub ingest {
         $defaults{encoding} = 'UTF-8';
         $defaults{file} = [undef, 'upload.xml' , Content => $xml];
     }
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'ingest' , $self->_POST('/objects/' . $pid, $form_data)
            );
@@ -1018,34 +1019,34 @@ This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catma
 model.
 
  Example:
- 
+
    my $obj = $fedora->modifyDatastream(pid => 'demo:29', dsID => 'TEST' , file => 'README', mimeType => 'text/plain')->parse_content;
-   
+
    print "Uploaded at: %s\n" , $obj->{dateTime};
-   
+
 =cut
 sub modifyDatastream {
     my $self = shift;
     my %args = (pid => undef , dsID => undef, url => undef , file => undef , xml => undef , @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
     Carp::croak "need url or file (filename)" unless defined $args{url} || defined $args{file} || defined $args{xml};
-    
+
     my $pid  = $args{pid};
     my $dsID = $args{dsID};
     my $url  = $args{url};
     my $file = $args{file};
     my $xml  = $args{xml};
-     
+
     delete $args{pid};
     delete $args{dsID};
     delete $args{url};
     delete $args{file};
     delete $args{xml};
-    
+
     my %defaults = (versionable => 'false');
-    
+
     if (defined $file) {
         $defaults{file} = ["$file"];
         $defaults{controlGroup} = 'M';
@@ -1059,14 +1060,14 @@ sub modifyDatastream {
         $defaults{dsLocation} = $url;
         $defaults{controlGroup} = 'E';
     }
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'modifyDatastream' , $self->_PUT('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
            );
@@ -1079,29 +1080,29 @@ and lastModifiedDate can be provided.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::modifyObject> model.
 
   Example:
-  
+
   $fedora->modifyObject(pid => 'demo:29' , state => 'I');
-  
+
 =cut
 sub modifyObject {
     my $self = shift;
     my %args = (pid => undef , @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid  = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ();
 
-    my %values = (%defaults,%args);  
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'modifyObject' , $self->_PUT('/objects/' . $pid , $form_data)
            );
@@ -1115,35 +1116,35 @@ See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::purgeDatastream> model.
 
   Example:
-  
+
   $fedora->purgeDatastream(pid => 'demo:29', dsID => 'TEST')->parse_content;
-  
+
 =cut
 sub purgeDatastream {
     my $self = shift;
     my %args = (pid => undef , dsID => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
-    
+
     my $pid  = $args{pid};
     my $dsID = $args{dsID};
-     
+
     delete $args{pid};
     delete $args{dsID};
-    
+
     my %defaults = ();
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'purgeDatastream' , $self->_DELETE('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
-           );  
+           );
 }
 
 =head2 purgeObject(pid => $pid, logMessage => $logMessage)
@@ -1153,29 +1154,29 @@ be provided.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::purgeObject> model.
 
   Example:
-  
+
   $fedora->purgeObject(pid => 'demo:29');
 
 =cut
 sub purgeObject {
     my $self = shift;
     my %args = (pid => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid  = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ();
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'purgeObject' , $self->_DELETE('/objects/' . $pid, $form_data)
            );
@@ -1188,24 +1189,24 @@ the object and the relation to be deleted. Optionally the $dataType of the liter
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::purgeRelationship> model.
 
   Example:
-  
+
   $fedora->purgeRelationship(pid => 'demo:29' , relation => [ 'info:fedora/demo:29' , 'http://my.org/name' , 'Peter'])
 
 =cut
 sub purgeRelationship {
     my $self = shift;
     my %args = (pid => undef , relation => undef, @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need relation" unless defined $args{relation} && ref $args{relation} eq 'ARRAY';
-    
+
     my $pid       = $args{pid};
     my $subject   = $args{relation}->[0];
     my $predicate = $args{relation}->[1];
     my $object    = $args{relation}->[2];
     my $dataType  = $args{dataType};
     my $isLiteral = is_uri($object) ? "false" : "true";
-    
+
     my $form_data = [
         { subject   => $subject },
         { predicate => $predicate },
@@ -1224,35 +1225,35 @@ sub purgeRelationship {
 This method can be used to put a data stream on/offline. Required parameters are the $pid of the object , the
 $dsID of the data stream and the required new $dsState ((A)ctive, (I)nactive, (D)eleted).
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile> model.
-  
+
   Example:
-  
+
   $fedora->setDatastreamState(pid => 'demo:29' , dsID => 'url' , dsState => 'I');
-  
+
 =cut
 sub setDatastreamState {
     my $self = shift;
     my %args = (pid => undef , dsID => undef, dsState => undef , @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
     Carp::croak "need dsState" unless $args{dsState};
-    
+
     my $pid     = $args{pid};
     my $dsID    = $args{dsID};
-     
+
     delete $args{pid};
     delete $args{dsID};
-    
+
     my %defaults = ();
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'setDatastreamState' , $self->_PUT('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
            );
@@ -1265,36 +1266,36 @@ the $dsID of the data stream and the new $versionable (true|false) state.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::datastreamProfile> model.
 
   Example:
-  
+
   $fedora->setDatastreamVersionable(pid => 'demo:29' , dsID => 'url' , versionable => 'false');
-  
+
 =cut
 sub setDatastreamVersionable {
     my $self = shift;
     my %args = (pid => undef , dsID => undef, versionable => undef , @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
     Carp::croak "need dsID" unless $args{dsID};
     Carp::croak "need versionable" unless $args{versionable};
-    
+
     my $pid     = $args{pid};
     my $dsID    = $args{dsID};
-     
+
     delete $args{pid};
     delete $args{dsID};
-    
+
     my %defaults = ();
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'setDatastreamVersionable' , $self->_PUT('/objects/' . $pid . '/datastreams/' . $dsID, $form_data)
-           ); 
+           );
 }
 
 =head2 validate(pid => $pid)
@@ -1303,31 +1304,31 @@ This method can be used to validate the content of an object. Required parameter
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::validate> model.
 
   Example:
-  
+
   my $obj = $fedora->validate(pid => 'demo:29')->parse_content;
-  
+
   print "Is valid: %s\n" , $obj->{valid};
-  
+
 =cut
 sub validate {
     my $self = shift;
     my %args = (pid => undef , @_);
-    
+
     Carp::croak "need pid" unless $args{pid};
-    
+
     my $pid     = $args{pid};
-     
+
     delete $args{pid};
-    
+
     my %defaults = ();
-    
-    my %values = (%defaults,%args);  
+
+    my %values = (%defaults,%args);
     my $form_data = [];
-                   
+
     for my $name (keys %values) {
         push @$form_data , { $name => $values{$name} };
     }
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'validate' , $self->_GET('/objects/' . $pid . '/validate', $form_data)
            );
@@ -1339,24 +1340,24 @@ This method uploads a file to the Fedora Server. Required parameter is the $file
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::upload-> model.
 
  Example:
- 
+
  my $obj = $fedora->upload(file => 't/marc.xml')->parse_content;
- 
+
  print "Upload id: %s\n" , $obj->{id};
- 
+
 =cut
 sub upload {
     my $self = shift;
     my %args = (file => undef , @_);
-    
+
     Carp::croak "need file" unless $args{file};
-    
+
     my $file = $args{file};
 
     delete $args{file};
-    
+
     my $form_data = [ { file => [ "$file"] }];
-    
+
     return Catmandu::FedoraCommons::Response->factory(
             'upload' , $self->_POST('/upload', $form_data)
            );

@@ -8,6 +8,7 @@ on 'test', sub {
 };
 
 requires 'Catmandu', '1.06';
+requires 'Date::Parse','0';
 requires 'Data::Validate::URI', '0.06';
 requires 'Data::Validate::Type', '1.5.1';
 requires 'HTTP::Request::Common', '6.04';
