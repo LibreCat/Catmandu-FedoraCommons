@@ -240,15 +240,28 @@ sub _get {
     my $first = $object->{profile}->[0];
     my $last  = $object->{profile}->[-1];
 
+    my $created  = str2time($last->{dsCreateDate});
+    $created  =~ s{\..*}{};
+    my $modified = str2time($first->{dsCreateDate});
+    $modified =~ s{\..*}{};
+
     return undef unless $first->{dsState} eq 'A';
 
     return {
-        _id          => $first->{dsLabel} ,
-        size         => $first->{dsSize} ,
-        md5          => $first->{dsChecksum} ,
-        content_type => $first->{dsMIME} ,
-        created      => str2time($last->{dsCreateDate}) ,
-        modified     => str2time($first->{dsCreateDate}) ,
+        _id           => $first->{dsLabel} ,
+        size          => $first->{dsSize} ,
+        md5           => $first->{dsChecksum} ,
+        content_type  => $first->{dsMIME} ,
+        created       => $created ,
+        modified      => $modified ,
+        info_type     => $first->{dsInfoType} ,
+        state         => $first->{dsState} ,
+        versionable   => $first->{dsVersionable} ,
+        location      => $first->{dsLocation} ,
+        locationType  => $first->{dsLocationType} ,
+        version_id    => $first->{dsVersionID} ,
+        control_group => $first->{dsControlGroup} ,
+        format_uri    => $first->{dsFormatURI} ,
         _stream      => sub {
             my $out  = shift;
             my $bytes = 0;

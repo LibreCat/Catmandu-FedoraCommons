@@ -1,4 +1,4 @@
-Catmandu-FedoraCommons-*
+Catmandu-FedoraCommons-[0-9]*
 /.build
 !META.json
 LICENSE

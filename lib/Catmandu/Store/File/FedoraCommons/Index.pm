@@ -17,7 +17,7 @@ sub generator {
 
     my $fedora = $self->store->fedora;
 
-    $self->log->debug("creating generator for Fedora @ " . $self->store->url);
+    $self->log->debug("creating generator for Fedora @ " . $self->store->baseurl);
 
     return sub {
         state $hits;
