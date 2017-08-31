@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Exception;
+use IO::File;
+use IO::File::WithFilename;
 use Catmandu::Store::File::FedoraCommons;
 
 my $host = $ENV{FEDORA_HOST} || "";
@@ -39,7 +41,7 @@ SKIP: {
 
     note("add");
     {
-        ok $bag->upload(IO::File->new('t/marc.xml'),'marc.xml');
+        ok $bag->upload(IO::File::WithFilename->new('t/marc.xml'),'marc.xml');
 
         ok $bag->upload(IO::File->new('t/obj_demo_40.zip'),'obj_demo_40.zip');
     }

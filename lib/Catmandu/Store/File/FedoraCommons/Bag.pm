@@ -69,12 +69,13 @@ sub add {
     my $key = $data->{_id};
     my $io  = $data->{_stream};
 
-    my $filename = $self->_io_filename($io);
-
-    if ($filename) {
+    if ($io->can('filename')) {
+        my $filename = $io->filename;
+        $self->log->debug("adding a stream from the filename");
         return $self->_add_filename($key, $io, $filename);
     }
     else {
+        $self->log->debug("copying a stream to a filename");
         return $self->_add_stream($key, $io);
     }
 }
@@ -365,11 +366,13 @@ sub _add_stream {
 
     if (Catmandu::Util::is_invocant($io)) {
         # We got a IO::Handle
+        $self->log->debug("..copying to $filename");
         File::Copy::cp($io, $filename);
         $io->close;
     }
     else {
         # We got a string
+        $self->log->debug("..string to $filename");
         Catmandu::Util::write_file($filename, $io);
     }
 
@@ -429,29 +432,6 @@ sub _add_stream {
     return $self->get($key);
 }
 
-sub _io_filename {
-    my ($self, $data) = @_;
-
-    return undef unless Catmandu::Util::is_invocant($data);
-
-    my $inode = [$data->stat]->[1];
-
-    return undef unless $inode;
-
-    my $ls    = `ls -i | grep $inode`;
-
-    if ($? != 0) {
-        $self->log->error("warning: ls -i | grep $inode not available on your platform");
-        warn "warning: ls -i | grep $inode not available on your platform";
-    }
-    if ($ls =~ /^\d+\s+(\S.*)/) {
-        return $1;
-    }
-    else {
-        return undef;
-    }
-}
-
 1;
 
 __END__
@@ -508,6 +488,9 @@ Catmandu::Store::File::FedoraCommons::Bag - Index of all "files" in a Catmandu::
 
     # Add a file
     $files->upload(IO::File->new("<data.dat"),"data.dat");
+
+    # or (faster)
+    $files->upload(IO::File::WithFilename->new("<data.dat"),"data.dat");
 
     # Retrieve a file
     my $file = $files->get("data.dat");
@@ -596,6 +579,9 @@ Delete all files in this folder.
 =head2 upload(IO::Handle,$name)
 
 Upload the IO::Handle reference to the FedoraCommons store "folder" and use $name as identifier.
+
+FedoraCommons bags will have a faster upload using L<IO::File::WithFilename> as
+IO::Handles
 
 =head2 stream(IO::Handle,$file)
 

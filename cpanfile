@@ -14,6 +14,7 @@ requires 'HTTP::Request::Common', '6.04';
 requires 'RDF::Trine', '1.014';
 requires 'Test::JSON', '0.11';
 requires 'XML::LibXML', '2.0121';
+requires 'IO::File::WithFilename', '0.01';
 
 # Need recent SSL to talk to https endpoint correctly
 requires 'IO::Socket::SSL', '2.015';

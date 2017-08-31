@@ -41,6 +41,7 @@
             "Data::Validate::Type" : "v1.5.1",
             "Data::Validate::URI" : "0.06",
             "HTTP::Request::Common" : "6.04",
+            "IO::File::WithFilename" : "0.01",
             "IO::Socket::SSL" : "2.015",
             "RDF::Trine" : "1.014",
             "Test::JSON" : "0.11",
