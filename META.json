@@ -40,6 +40,7 @@
             "Catmandu" : "1.06",
             "Data::Validate::Type" : "v1.5.1",
             "Data::Validate::URI" : "0.06",
+            "Date::Parse" : "0",
             "HTTP::Request::Common" : "6.04",
             "IO::File::WithFilename" : "0.01",
             "IO::Socket::SSL" : "2.015",
@@ -70,7 +71,7 @@
          "web" : "https://github.com/LibreCat/Catmandu-FedoraCommons"
       }
    },
-   "version" : "0.274",
+   "version" : "0.3",
    "x_contributors" : [
       "njfranck <njfranck@ca20c521.ugent.be>",
       "Patrick Hochstenbach <patrick.hochstenbach@ugent.be>"
