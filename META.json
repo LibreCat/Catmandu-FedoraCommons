@@ -37,7 +37,7 @@
       },
       "runtime" : {
          "requires" : {
-            "Catmandu" : "0.9301",
+            "Catmandu" : "1.06",
             "Data::Validate::Type" : "v1.5.1",
             "Data::Validate::URI" : "0.06",
             "HTTP::Request::Common" : "6.04",

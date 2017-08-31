@@ -9,9 +9,9 @@ my $pwd  = $ENV{FEDORA_PWD} || "";
 
 SKIP: {
     skip "No Fedora server environment settings found (FEDORA_HOST,"
-	 . "FEDORA_PORT,FEDORA_USER,FEDORA_PWD).", 
+	 . "FEDORA_PORT,FEDORA_USER,FEDORA_PWD).",
 	31 if (! $host || ! $port || ! $user || ! $pwd);
-	 
+
     my $x = Catmandu::FedoraCommons->new("http://$host:$port/fedora",$user,$pwd);
 
     ok($res = $x->findObjects(terms=>'*'),'findObjects');
