@@ -39,7 +39,7 @@ sub _build_fedora {
 
     my $model = $self->model;
 
-    unless (Catmandu::Util::is_invocant($model) || Catmandu::Util::is_code_ref($model)) {
+    if ($model && !(Catmandu::Util::is_invocant($model) || Catmandu::Util::is_code_ref($model))) {
         my $class = $model =~ /^\+(.+)/ ? $1
           : "Catmandu::Store::FedoraCommons::$model";
 

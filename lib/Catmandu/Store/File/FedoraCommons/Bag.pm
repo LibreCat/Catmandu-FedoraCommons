@@ -6,6 +6,7 @@ our $VERSION = '1.0602';
 
 use Moo;
 use Date::Parse;
+use File::Copy;
 use Catmandu::Util qw(content_type);
 use namespace::clean;
 
