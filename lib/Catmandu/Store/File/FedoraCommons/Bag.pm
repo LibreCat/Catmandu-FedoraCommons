@@ -7,6 +7,7 @@ our $VERSION = '1.0602';
 use Moo;
 use Date::Parse;
 use File::Copy;
+use Carp;
 use Catmandu::Util qw(content_type);
 use namespace::clean;
 
@@ -438,6 +439,11 @@ sub _io_filename {
     return undef unless $inode;
 
     my $ls    = `ls -i | grep $inode`;
+
+    if ($? != 0) {
+        $self->log->error("warning: ls -i | grep $inode not available on your platform");
+        warn "warning: ls -i | grep $inode not available on your platform";
+    }
     if ($ls =~ /^\d+\s+(\S.*)/) {
         return $1;
     }
