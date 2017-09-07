@@ -11,7 +11,9 @@ use Carp;
 use Catmandu::Util qw(content_type);
 use namespace::clean;
 
-with 'Catmandu::Bag', 'Catmandu::FileBag', 'Catmandu::Droppable';
+with 'Catmandu::Bag';
+with 'Catmandu::FileBag';
+with 'Catmandu::Droppable';
 
 sub generator {
     my ($self) = @_;
@@ -504,97 +506,18 @@ Catmandu::Store::File::FedoraCommons::Bag - Index of all "files" in a Catmandu::
     # Delete a folders
     $index->delete("1234");
 
-=head1 DESCRIPTION
+=head1 INHERITED METHODS
 
-A L<Catmandu::Store::File::FedoraCommons::Bag> contains all "files" available in a
-L<Catmandu::Store::File::FedoraCommons> FileStore "folder". All methods of L<Catmandu::Bag>,
-L<Catmandu::FileBag::Index> and L<Catmandu::Droppable> are
-implemented.
+This Catmandu::Bag implements:
 
-Every L<Catmandu::Bag> is also an L<Catmandu::Iterable>.
+=over 3
 
-=head1 FOLDERS
+=item L<Catmandu::Bag>
 
-All files in a L<Catmandu::Store::File::FedoraCommons> are organized in "folders". To add
-a "folder" a new record needs to be added to the L<Catmandu::Store::File::FedoraCommons::Index> :
+=item L<Catmandu::FileBag>
 
-    $index->add({_id => '1234'});
+=item L<Catmandu::Droppable>
 
-The C<_id> field is the only metadata available in FedoraCommons stores. To add more
-metadata fields to a FedoraCommons store a L<Catmandu::Plugin::SideCar> is required.
-
-=head1 FILES
-
-Files can be accessed via the "folder" identifier:
-
-    my $files = $index->files('1234');
-
-Use the C<upload> method to add new files to a "folder". Use the C<download> method
-to retrieve files from a "folder".
-
-    $files->upload(IO::File->new("</tmp/data.txt"),'data.txt');
-
-    my $file = $files->get('data.txt');
-
-    $files->download(IO::File->new(">/tmp/data.txt"),$file);
-
-=head1 METHODS
-
-=head2 each(\&callback)
-
-Execute C<callback> on every "file" in the FedoraCommons store "folder". See L<Catmandu::Iterable> for more
-iterator functions
-
-=head2 exists($name)
-
-Returns true when a "file" with identifier $name exists.
-
-=head2 add($hash)
-
-Adds a new "file" to the FedoraCommons store "folder". It is very much advised to use the
-C<upload> method below to add new files
-
-=head2 get($id)
-
-Returns a hash containing the metadata of the file. The hash contains:
-
-    * _id : the file name
-    * size : file file size
-    * content_type : the content_type
-    * created : the creation date of the file
-    * modified : the modification date of the file
-    * _stream: a callback function to write the contents of a file to an L<IO::Handle>
-
-If is very much advised to use the C<stream> method below to retrieve files from
-the store.
-
-=head2 delete($name)
-
-Delete the "file" with name $name, if exists.
-
-=head2 delete_all()
-
-Delete all files in this folder.
-
-=head2 upload(IO::Handle,$name)
-
-Upload the IO::Handle reference to the FedoraCommons store "folder" and use $name as identifier.
-
-FedoraCommons bags will have a faster upload using L<IO::File::WithFilename> as
-IO::Handles
-
-=head2 stream(IO::Handle,$file)
-
-Write the contents of the $file returned by C<get> to the IO::Handle.
-
-=head1 SEE ALSO
-
-L<Catmandu::Store::File::FedoraCommons::Bag> ,
-L<Catmandu::Store::File::FedoraCommons> ,
-L<Catmandu::FileBag::Index> ,
-L<Catmandu::Plugin::SideCar> ,
-L<Catmandu::Bag> ,
-L<Catmandu::Droppable> ,
-L<Catmandu::Iterable>
+=back
 
 =cut

@@ -41,6 +41,7 @@ sub _build_fedora {
 
     Catmandu::FedoraCommons->new($self->baseurl, $self->username, $self->password);
 }
+
 #namespace corresponds to name of bag
 #don't use "data", but use the internal default namespace of fedora
 around default_bag => sub {
@@ -69,6 +70,7 @@ use Catmandu::Store::FedoraCommons::FOXML;
 use Moo;
 use Catmandu::Util qw(:is);
 
+with 'Catmandu::Bag';
 
 has _namespace_prefix => (
     is => 'ro',
@@ -82,6 +84,7 @@ has _namespace_prefix_re => (
     lazy => 1,
     builder => '_build_namespace_prefix_re'
 );
+
 sub _build_namespace_prefix {
     my $self = $_[0];
     my $name = $self->name();
@@ -127,11 +130,11 @@ sub _get_model {
     my $pid    = $obj->{pid};
     my $fedora = $self->store->fedora;
     my $model  = $self->store->model;
-    
+
     eval "use $model";
     my $x   = $model->new(fedora => $fedora);
     my $res = $x->get($pid);
-    
+
     return $res;
 }
 
@@ -149,42 +152,42 @@ sub _update_model {
 
 sub _ingest_model {
     my ($self, $data) = @_;
-    
+
     my $serializer = Catmandu::Store::FedoraCommons::FOXML->new;
-    
+
     my ($valid,$reason) = $serializer->valid($data);
-    
+
     unless ($valid) {
         warn "data is not valid";
         return undef;
     }
-    
+
     my $xml = $serializer->serialize($data);
- 
+
     my %args = (
         pid => $data->{_id} ,
         xml => $xml ,
         format => 'info:fedora/fedora-system:FOXML-1.1'
     );
-    
+
     my $result = $self->store->fedora->ingest(%args);
-    
+
     return undef unless $result->is_ok;
-    
+
     $data->{_id} = $result->parse_content->{pid};
-    
+
     return $self->_update_model($data);
 }
 
 sub generator {
     my ($self) = @_;
     my $fedora = $self->store->fedora;
-    
+
     sub {
         state $hits;
         state $row;
         state $ns_prefix = $self->_namespace_prefix;
-        
+
         if( ! defined $hits) {
             my $res = $fedora->findObjects( query => "pid~${ns_prefix}*" );
             unless ($res->is_ok) {
@@ -196,19 +199,19 @@ sub generator {
         }
         if ($row + 1 == @{ $hits->{results} } && defined $hits->{token}) {
             my $result = $hits->{results}->[ $row ];
-            
+
             my $res = $fedora->findObjects(sessionToken => $hits->{token});
-            
+
             unless ($res->is_ok) {
                 warn $res->error;
                 return undef;
             }
-            
+
             $row  = 0;
             $hits = $res->parse_content;
-            
+
             return $self->_get_model($result);
-        }  
+        }
         else {
             my $result = $hits->{results}->[ $row++ ];
             return $self->_get_model($result);
@@ -217,8 +220,8 @@ sub generator {
 }
 
 sub add {
-    my ($self,$data) = @_;    
-    
+    my ($self,$data) = @_;
+
     if ( defined $self->get($data->{_id}) ) {
         my $ok = $self->_update_model($data);
 
@@ -226,10 +229,10 @@ sub add {
     }
     else {
         my $ok = $self->_ingest_model($data);
-        
+
         die "failed to ingest" unless $ok;
     }
-         
+
     return $data;
 }
 
@@ -240,31 +243,29 @@ sub get {
 
 sub delete {
     my ($self, $id) = @_;
-    
+
     return undef unless defined $id;
-    
+
     my $fedora = $self->store->fedora;
-    
+
     $fedora->purgeObject(pid => $id)->is_ok;
 }
 
 sub delete_all {
     my ($self) = @_;
-    
+
     my $count = 0;
     $self->each(sub {
         my $obj = $_[0];
         my $pid = $obj->{_id};
-        
+
         my $ret = $self->delete($pid);
-        
+
         $count += 1 if $ret;
     });
-    
+
     $count;
 }
-
-with 'Catmandu::Bag';
 
 1;
 
@@ -284,8 +285,8 @@ Catmandu::Store::FedoraCommons - A Catmandu::Store plugin for the Fedora Commons
  );
 
  # We use the DC model, lets store some DC
- my $obj1 = $store->bag->add({ 
-                    title => ['The Master and Margarita'] , 
+ my $obj1 = $store->bag->add({
+                    title => ['The Master and Margarita'] ,
                     creator => ['Bulgakov, Mikhail'] }
             );
 
@@ -301,14 +302,14 @@ Catmandu::Store::FedoraCommons - A Catmandu::Store plugin for the Fedora Commons
  $store->bag->delete_all;
 
  # All bags are iterators
- $store->bag->each(sub {  
+ $store->bag->each(sub {
      my $obj = $_[0];
      my $pid = $obj->{_id};
      my $ds  = $store->fedora->listDatastreams(pid => $pid)->parse_content;
  });
- 
+
  $store->bag->take(10)->each(sub { ... });
- 
+
 =head1 DESCRIPTION
 
 A Catmandu::Store::FedoraCommons is a Perl package that can store data into
@@ -339,9 +340,27 @@ fedora namespace.
 
 Returns a low level Catmandu::FedoraCommons reference.
 
+=head1 INHERITED METHODS
+
+This Catmandu::Store implements:
+
+=over 3
+
+=item L<Catmandu::Store>
+
+=back
+
+Each Catmandu::Bag in this Catmandu::Store implements:
+
+=over 3
+
+=item L<Catmandu::Bag>
+
+=back
+
 =head1 SEE ALSO
 
-L<Catmandu::Bag>, L<Catmandu::Searchable>, L<Catmandu::FedoraCommons>
+L<Catmandu::FedoraCommons>
 
 =head1 AUTHOR
 

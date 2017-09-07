@@ -11,7 +11,9 @@ use namespace::clean;
 
 use Data::Dumper;
 
-with 'Catmandu::Bag', 'Catmandu::FileBag::Index', 'Catmandu::Droppable';
+with 'Catmandu::Bag';
+with 'Catmandu::FileBag::Index';
+with 'Catmandu::Droppable';
 
 sub generator {
     my ($self) = @_;
@@ -283,85 +285,19 @@ Catmandu::Store::File::FedoraCommons::Index - Index of all "Folders" in a Catman
     # Delete a folders
     $index->delete("1234");
 
-=head1 DESCRIPTION
 
-A L<Catmandu::Store::File::FedoraCommons::Index> contains all "folders" available in a
-L<Catmandu::Store::File::FedoraCommons> FileStore. All methods of L<Catmandu::Bag>,
-L<Catmandu::FileBag::Index> and L<Catmandu::Droppable> are
-implemented.
+=head1 INHERITED METHODS
 
-Every L<Catmandu::Bag> is also an L<Catmandu::Iterable>.
+This Catmandu::Bag implements:
 
-=head1 FOLDERS
+=over 3
 
-All files in a L<Catmandu::Store::File::FedoraCommons> are organized in "folders". To add
-a "folder" a new record needs to be added to the L<Catmandu::Store::File::FedoraCommons::Index> :
+=item L<Catmandu::Bag>
 
-    $index->add({_id => '1234'});
+=item L<Catmandu::FileBag::Index>
 
-The C<_id> field is the only metadata available in FedoraCommons stores. To add more
-metadata fields to a FedoraCommons store a L<Catmandu::Plugin::SideCar> is required.
+=item L<Catmandu::Droppable>
 
-=head1 FILES
-
-Files can be accessed via the "folder" identifier:
-
-    my $files = $index->files('1234');
-
-Use the C<upload> method to add new files to a "folder". Use the C<download> method
-to retrieve files from a "folder".
-
-    $files->upload(IO::File->new("</tmp/data.txt"),'data.txt');
-
-    my $file = $files->get('data.txt');
-
-    $files->download(IO::File->new(">/tmp/data.txt"),$file);
-
-=head1 METHODS
-
-=head2 each(\&callback)
-
-Execute C<callback> on every "folder" in the FedoraCommons store. See L<Catmandu::Iterable> for more
-iterator functions
-
-=head2 exists($id)
-
-Returns true when a "folder" with identifier $id exists.
-
-=head2 add($hash)
-
-Adds a new "folder" to the FedoraCommons store. The $hash must contain an C<_id> field.
-
-=head2 get($id)
-
-Returns a hash containing the metadata of the folder. In the FedoraCommons store this hash
-will contain only the "folder" idenitifier.
-
-=head2 files($id)
-
-Return the L<Catmandu::Store::File::FedoraCommons::Bag> that contains all "files" in the "folder"
-with identifier $id.
-
-=head2 delete($id)
-
-Delete the "folder" with identifier $id, if exists.
-
-=head2 delete_all()
-
-Delete all folders in this store.
-
-=head2 drop()
-
-Delete the store.
-
-=head1 SEE ALSO
-
-L<Catmandu::Store::File::FedoraCommons::Bag> ,
-L<Catmandu::Store::File::FedoraCommons> ,
-L<Catmandu::FileBag::Index> ,
-L<Catmandu::Plugin::SideCar> ,
-L<Catmandu::Bag> ,
-L<Catmandu::Droppable> ,
-L<Catmandu::Iterable>
+=back
 
 =cut

@@ -148,7 +148,12 @@ Catmandu::Store::File::FedoraCommons - A Catmandu::FileStore to store files on d
 L<Catmandu::Store::File::FedoraCommons> is a L<Catmandu::FileStore> implementation to
 store files in a Fedora Commons 3 server. Each L<Catmandu::FileBag>.
 
-=head1 CONFIGURATION
+=head1 METHODS
+
+=head2 new(%connection_parameters)
+
+Create a new Catmandu::Store::FedoraCommons. The following connection paramaters
+can be provided:
 
 =over
 
@@ -236,6 +241,42 @@ Examples:
     versionable: 'false'
     ...
     $ catmandu stream files --bag 1234 --id foobar.pdf > foobar.pdf
+
+=back
+
+=head1 INHERITED METHODS
+
+This Catmandu::FileStore implements:
+
+=over 3
+
+=item L<Catmandu::FileStore>
+
+=item L<Catmandu::Droppable>
+
+=back
+
+The index Catmandu::Bag in this Catmandu::Store implements:
+
+=over 3
+
+=item L<Catmandu::Bag>
+
+=item L<Catmandu::FileBag::Index>
+
+=item L<Catmandu::Droppable>
+
+=back
+
+The file Catmandu::Bag in this Catmandu::Store implements:
+
+=over 3
+
+=item L<Catmandu::Bag>
+
+=item L<Catmandu::FileBag>
+
+=item L<Catmandu::Droppable>
 
 =back
 
