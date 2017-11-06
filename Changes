@@ -2,10 +2,13 @@ Revision history for Catmandu-OAI
 
 {{$NEXT}}
 
+0.4  2017-11-06 14:46:28 CET
+  - Fixing File::Store add to work like Store add
+
 0.3  2017-08-31 16:20:32 CEST
   - Adding support file Catmandu::FileStore
   - Adding more tests
-  
+
 0.274  2016-02-24 15:44:52 CET
   - Fixing code fo Catmandu 1.0 release
 

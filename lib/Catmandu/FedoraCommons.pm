@@ -64,7 +64,7 @@ package Catmandu::FedoraCommons;
 
 use Catmandu::FedoraCommons::Response;
 
-our $VERSION = '0.3';
+our $VERSION = '0.4';
 use v5.14;
 use URI::Escape;
 use HTTP::Request::Common qw(GET POST DELETE PUT HEAD);
