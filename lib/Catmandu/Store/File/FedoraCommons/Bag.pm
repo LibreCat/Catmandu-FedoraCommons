@@ -80,6 +80,12 @@ sub add {
         $self->log->debug("copying a stream to a filename");
         return $self->_add_stream($key, $io);
     }
+
+    my $new_data = $self->get($key);
+
+    $data->{$_} = $new_data->{$_} for keys %$new_data;
+
+    1;
 }
 
 sub delete {
@@ -349,7 +355,7 @@ sub _add_filename {
         return undef;
     }
 
-    $self->get($key);
+    1;
 }
 
 sub _add_stream {
@@ -431,7 +437,7 @@ sub _add_stream {
         return undef;
     }
 
-    return $self->get($key);
+    1;
 }
 
 1;

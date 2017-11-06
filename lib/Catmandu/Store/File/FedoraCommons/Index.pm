@@ -95,7 +95,7 @@ sub add {
 
     my $fedora    = $self->store->fedora;
     my $ns_prefix = $fedora->{namespace};
-    my $key = $data->{_id};
+    my $key       = $data->{_id};
 
     if ($self->exists($key)) {
         $self->log->debug("Updating container for $key");
@@ -134,7 +134,11 @@ sub add {
         }
     }
 
-    return $self->get($key);
+    my $new_data = $self->get($key);
+
+    $data->{$_} = $new_data->{$_} for keys %$new_data;
+
+    1;
 }
 
 sub get {
