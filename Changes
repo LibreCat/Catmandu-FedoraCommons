@@ -1,7 +1,8 @@
 Revision history for Catmandu-OAI
 
 {{$NEXT}}
-
+  - Adding Catmandu::FileStore dependency
+  
 0.4  2017-11-06 14:46:28 CET
   - Fixing File::Store add to work like Store add
 
