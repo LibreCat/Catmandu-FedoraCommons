@@ -8,6 +8,7 @@ on 'test', sub {
 };
 
 requires 'Catmandu', '1.06';
+requires 'Catmandu::FileStore', '1.13';
 requires 'Date::Parse','0';
 requires 'Data::Validate::URI', '0.06';
 requires 'Data::Validate::Type', '1.5.1';
