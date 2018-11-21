@@ -2,7 +2,7 @@ package Catmandu::Store::File::FedoraCommons::Bag;
 
 use Catmandu::Sane;
 
-our $VERSION = '0.4';
+our $VERSION = '0.5';
 
 use Moo;
 use Date::Parse;
