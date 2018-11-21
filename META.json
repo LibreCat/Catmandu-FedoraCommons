@@ -38,6 +38,7 @@
       "runtime" : {
          "requires" : {
             "Catmandu" : "1.06",
+            "Catmandu::FileStore" : "1.13",
             "Data::Validate::Type" : "v1.5.1",
             "Data::Validate::URI" : "0.06",
             "Date::Parse" : "0",
@@ -71,7 +72,7 @@
          "web" : "https://github.com/LibreCat/Catmandu-FedoraCommons"
       }
    },
-   "version" : "0.4",
+   "version" : "0.5",
    "x_contributors" : [
       "njfranck <njfranck@ca20c521.ugent.be>",
       "Patrick Hochstenbach <patrick.hochstenbach@ugent.be>"
