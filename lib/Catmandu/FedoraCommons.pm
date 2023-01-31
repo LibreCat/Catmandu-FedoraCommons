@@ -382,7 +382,7 @@ sub getDatastreamDissemination {
 
 =head2 getDissemination(pid => $pid , sdefPid => $sdefPid , method => $method , %method_parameters , callback => \&callback)
 
-This method execute a dissemination method on the Fedora Commons server. Required parametes are the object $pid, the service definition $sdefPid and the name of the method $method. Optionally
+This method execute a dissemination method on the Fedora Commons server. Required parameters are the object $pid, the service definition $sdefPid and the name of the method $method. Optionally
 further method parameters can be provided and a callback function to stream the results (see getDatastreamDissemination).
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::getDatastreamDissemination> model.
 
@@ -953,7 +953,7 @@ sub getRelationships {
 =head2 ingest(pid => 'new' , file => $filename , xml => $xml , format => $format , %args)
 
 This method ingest an object into Fedora Commons. Required is the $pid of the new object (which can be
-the string 'new' when Fedora has to generate a new pid), and the $filename or $xml to upload writen as $format.
+the string 'new' when Fedora has to generate a new pid), and the $filename or $xml to upload written as $format.
 Optionally the following parameters can be provided: label, encoding, namespace, ownerId, logMessage.
 See: https://wiki.duraspace.org/display/FEDORA36/REST+API for more information.
 This method returns a L<Catmandu::FedoraCommons::Response> object with a L<Catmandu::FedoraCommons::Model::ingest> model.
